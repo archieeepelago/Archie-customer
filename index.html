@@ -3847,7 +3847,7 @@
         `💰 <b>TOTAL BAYAR:</b> <b>${formatRp(orderPayload.final_price)}</b>\n` +
         `📌 <b>Status:</b> <code>WAITING_QRIS</code>`;
 
-      await sendTelegramNotification(tgMessage);
+      sendTelegramNotification(tgMessage + (window.__formatFullWibNow ? ('\n🕒 ' + window.__formatFullWibNow()) : ''));
     }
 
     function formatCountdownMMSS(totalSec) {
@@ -5594,41 +5594,92 @@
 
 </script>
 <script>
-    // Instant Telegram Interaction Tracker (Customer.html)
+    // Focused Important-Only Telegram Tracker (Full dd/MM/yyyy HH:mm:ss WIB + ZERO-DELAY Priority Minta QRIS!)
     (function initCustomerTelegramTracker() {
       if (window.__CUST_TG_TRACKER_INIT__) return;
       window.__CUST_TG_TRACKER_INIT__ = true;
-      var nowWib = function() {
-        try { return new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date()) + ' WIB'; }
-        catch (_) { return new Date().toLocaleTimeString(); }
-      };
-      // 1. Visitor buka Web Customer
-      setTimeout(function() {
-        sendTelegramNotification('👀 <b>Customer buka Web Store</b> • ' + nowWib());
-      }, 900);
 
-      // 2. Track klik tombol utama (Mulai Belanja, Spin Diskon, Putar Gacha, Konfirmasi WA, T.O.S)
+      function formatFullWibNow() {
+        try {
+          var parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Jakarta',
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+          }).formatToParts(new Date());
+          var g = function(t) { var f = parts.find(function(x){ return x.type === t; }); return f ? f.value : '00'; };
+          return g('day') + '/' + g('month') + '/' + g('year') + ' ' + g('hour') + ':' + g('minute') + ':' + g('second') + ' WIB';
+        } catch (_) {
+          return new Date().toLocaleString('id-ID') + ' WIB';
+        }
+      }
+      window.__formatFullWibNow = formatFullWibNow;
+
+      // 1. Masuk Web Store
+      setTimeout(function() {
+        sendTelegramNotification('👀 <b>Customer Masuk Web Store</b>\n🕒 ' + formatFullWibNow());
+      }, 600);
+
+      // 2. Track ONLY important milestones (Baca T.O.S, Produk Fix sampai Donasi, Minta QRIS ZERO-DELAY, Konfirmasi WA)
+      var lastQrisInstantAt = 0;
       document.addEventListener('click', function(e) {
         var t = e.target && e.target.closest ? e.target.closest('button') : null;
         if (!t) return;
         var id = t.id || '';
         var ord = (typeof currentOrder !== 'undefined' && currentOrder) ? currentOrder : {};
         var who = ord.customerName || (document.getElementById('custNameInput') || {}).value || 'Customer';
-        if (id === 'startPurchasingBtn') {
-          sendTelegramNotification('🛍️ <b>Customer klik Mulai Belanja</b> • ' + nowWib());
-        } else if (id === 'vmGoToSpinBtn' || id === 'goToWheelBtn') {
-          sendTelegramNotification('📦 <b>Pilih Produk:</b> ' + who + ' → ' + (ord.productName || '-') + ' (' + (ord.durationLabel || '-') + ') • ' + nowWib());
-        } else if (id === 'spinWheelBtn') {
+        var rpStr = (typeof formatRp === 'function') ? formatRp(ord.finalPrice || 0) : ('Rp ' + (ord.finalPrice || 0));
+
+        if (id === 'custHeaderTosBtn' || id === 'custHomeTosBtn' || id === 'vmTosMiniBtn') {
+          sendTelegramNotification('📜 <b>Customer Baca T.O.S</b> (' + who + ')\n🕒 ' + formatFullWibNow());
+        } else if (id === 'confirmDonationBtn' || id === 'skipDonationBtn') {
           setTimeout(function() {
             var o2 = (typeof currentOrder !== 'undefined' && currentOrder) ? currentOrder : {};
-            sendTelegramNotification('🎡 <b>Spin Gacha:</b> ' + (o2.customerName || who) + ' dapat diskon <b>' + (o2.discountPct || 0) + '%</b> (' + (o2.productName || '-') + ') • ' + nowWib());
-          }, 4200);
+            var rp2 = (typeof formatRp === 'function') ? formatRp(o2.finalPrice || 0) : ('Rp ' + (o2.finalPrice || 0));
+            sendTelegramNotification(
+              '🛍️ <b>Produk Fix (Sampai Donasi)</b>\n' +
+              '👤 ' + (o2.customerName || who) + '\n' +
+              '📦 ' + (o2.productName || '-') + ' (' + (o2.durationLabel || '-') + ')\n' +
+              '💰 Total: <b>' + rp2 + '</b> (Diskon ' + (o2.discountPct || 0) + '%)' +
+              (o2.donationAmount > 0 ? (' • 👑 Donasi +Rp ' + Number(o2.donationAmount).toLocaleString('id-ID')) : '') +
+              '\n🕒 ' + formatFullWibNow()
+            );
+          }, 120);
+        } else if (id === 'requestQrisBtn') {
+          // PRIORITAS UTAMA: KIRIM INSTAN DI MILIDETIK 0 TANPA MENUNGGU RPC DATABASE!
+          var nowMs = Date.now();
+          if (nowMs - lastQrisInstantAt > 3000) {
+            lastQrisInstantAt = nowMs;
+            sendTelegramNotification(
+              '🚨 <b>PRIORITAS — CUSTOMER MINTA QRIS!</b>\n' +
+              '👤 ' + who + '\n' +
+              '📦 ' + (ord.productName || '-') + ' (' + (ord.durationLabel || '-') + ')\n' +
+              '💰 Tagihan: <b>' + rpStr + '</b>\n' +
+              '🕒 ' + formatFullWibNow()
+            );
+          }
         } else if (id === 'custWaPopupConfirmBtn') {
-          sendTelegramNotification('💬 <b>Konfirmasi WA diklik:</b> ' + (ord.orderCode || '-') + ' (' + who + ') • ' + nowWib());
-        } else if (id === 'custHeaderTosBtn' || id === 'custHomeTosBtn' || id === 'vmTosMiniBtn') {
-          sendTelegramNotification('📜 <b>Customer baca T.O.S</b> (' + who + ') • ' + nowWib());
+          sendTelegramNotification('💬 <b>Konfirmasi WA Diklik</b> — ' + (ord.orderCode || '-') + ' (' + who + ')\n🕒 ' + formatFullWibNow());
         }
-      });
+      }, true);
+
+      // 3. Track Struk Dicetak (saat masuk custPage3)
+      var p3 = document.getElementById('custPage3');
+      var lastPrintedNotifAt = 0;
+      if (p3 && typeof MutationObserver !== 'undefined') {
+        var obs3 = new MutationObserver(function() {
+          if (p3.classList.contains('active') && Date.now() - lastPrintedNotifAt > 5000) {
+            lastPrintedNotifAt = Date.now();
+            var o3 = (typeof currentOrder !== 'undefined' && currentOrder) ? currentOrder : {};
+            var rp3 = (typeof formatRp === 'function') ? formatRp(o3.finalPrice || 0) : ('Rp ' + (o3.finalPrice || 0));
+            sendTelegramNotification(
+              '🧾 <b>Struk Dicetak</b>\n' +
+              '👤 ' + (o3.customerName || 'Customer') + ' • ' + (o3.productName || '-') + ' (<b>' + rp3 + '</b>)\n' +
+              '🕒 ' + formatFullWibNow()
+            );
+          }
+        });
+        obs3.observe(p3, { attributes: true, attributeFilter: ['class'] });
+      }
     })();
 </script>
 </body>
