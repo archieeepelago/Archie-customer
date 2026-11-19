@@ -340,11 +340,11 @@
       animation: popCandaaAboveX 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
-    /* Thermal Receipt Serrated Edge */
+    /* Thermal Receipt Serrated Edge — Clean White with Super Light Yellow Tint */
     .thermal-paper-card {
-      background: #FFFCFD;
-      border: 1.5px solid #F3B6CD;
-      box-shadow: 0 12px 28px rgba(150, 56, 98, 0.13);
+      background: linear-gradient(180deg, #FFFFFF 0%, #FFFDF6 100%) !important;
+      border: 1.5px solid #F3DCE2 !important;
+      box-shadow: 0 12px 28px rgba(180, 60, 100, 0.12);
       font-variant-numeric: tabular-nums;
     }
 
@@ -372,11 +372,119 @@
       opacity: 1;
     }
 
-    /* Berry-Rose Critique Card */
+    /* Levitating Dominant Pink FROSTED GLASS Card (#custPage4) — Matte Satin Translucent Pink */
+    @keyframes custCardLevitate {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-7px); }
+    }
+    @keyframes waPopupSpringIn {
+      0% { opacity: 0; transform: scale(0.76) translateY(28px); }
+      56% { opacity: 1; transform: scale(1.045) translateY(-4px); }
+      78% { transform: scale(0.985) translateY(1px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
     .critique-card {
-      background: linear-gradient(165deg, #B56B8D 0%, #8E4668 55%, #6E304E 100%);
-      box-shadow: 0 18px 42px rgba(110, 48, 78, 0.28);
-      border: 2px solid rgba(255, 224, 236, 0.65);
+      position: relative;
+      background: linear-gradient(148deg, rgba(255, 162, 198, 0.78) 0%, rgba(255, 190, 216, 0.74) 56%, rgba(255, 224, 212, 0.70) 100%) !important;
+      backdrop-filter: blur(36px) saturate(145%);
+      -webkit-backdrop-filter: blur(36px) saturate(145%);
+      box-shadow: 0 22px 46px rgba(178, 44, 96, 0.22), inset 0 1.5px 0 rgba(255, 255, 255, 0.78), inset 0 -1.5px 0 rgba(255, 232, 215, 0.45);
+      border: 1.5px solid rgba(255, 255, 255, 0.74) !important;
+      color: #4A1832;
+      animation: custCardLevitate 4.2s ease-in-out infinite;
+    }
+    .critique-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 224, 236, 0.14) 48%, rgba(255, 244, 220, 0.10) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .critique-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      opacity: 0.065;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+    }
+    .critique-card > * { position: relative; z-index: 2; }
+    .frosted-glass-chip {
+      background: linear-gradient(135deg, rgba(255, 224, 236, 0.74) 0%, rgba(255, 240, 236, 0.68) 100%) !important;
+      backdrop-filter: blur(18px) saturate(135%);
+      -webkit-backdrop-filter: blur(18px) saturate(135%);
+      border: 1px solid rgba(255, 255, 255, 0.76) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 4px 10px rgba(176, 48, 96, 0.10);
+      color: #5E1B3B !important;
+    }
+    .frosted-glass-chip:hover {
+      background: linear-gradient(135deg, rgba(255, 206, 224, 0.88) 0%, rgba(255, 236, 226, 0.84) 100%) !important;
+    }
+    .frosted-glass-submit {
+      background: linear-gradient(135deg, rgba(224, 62, 114, 0.82) 0%, rgba(244, 112, 152, 0.78) 60%, rgba(255, 168, 178, 0.80) 100%) !important;
+      backdrop-filter: blur(20px) saturate(145%);
+      -webkit-backdrop-filter: blur(20px) saturate(145%);
+      border: 1.5px solid rgba(255, 255, 255, 0.72) !important;
+      box-shadow: 0 10px 24px rgba(196, 42, 92, 0.24), inset 0 1.5px 0 rgba(255, 255, 255, 0.62) !important;
+      color: #FFFFFF !important;
+      text-shadow: 0 1px 2px rgba(90, 20, 48, 0.25);
+    }
+    .frosted-glass-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(196, 42, 92, 0.30), inset 0 1.5px 0 rgba(255, 255, 255, 0.78) !important;
+    }
+    /* Smooth Spring Popup for External WA Confirmation */
+    #custWaPopupOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(56, 18, 40, 0.56);
+      backdrop-filter: blur(7px);
+      -webkit-backdrop-filter: blur(7px);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.24s ease, visibility 0.24s ease;
+    }
+    #custWaPopupOverlay.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+    #custWaPopupOverlay .wa-popup-card {
+      width: 100%;
+      max-width: 375px;
+      background: linear-gradient(150deg, rgba(255, 253, 248, 0.95) 0%, rgba(255, 236, 244, 0.94) 58%, rgba(255, 246, 228, 0.96) 100%);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 2px solid rgba(255, 255, 255, 0.92);
+      border-radius: 28px;
+      box-shadow: 0 24px 54px rgba(74, 24, 49, 0.34), inset 0 2px 0 rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      opacity: 0;
+      transform: scale(0.76) translateY(26px);
+    }
+    #custWaPopupOverlay.open .wa-popup-card {
+      animation: waPopupSpringIn 0.46s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .wa-glossy-cta {
+      background: linear-gradient(135deg, #0D9488 0%, #10B981 48%, #34D399 100%);
+      border: 1.5px solid rgba(255, 255, 255, 0.72);
+      box-shadow: 0 12px 26px rgba(16, 185, 129, 0.32), inset 0 1.5px 0 rgba(255, 255, 255, 0.65);
+      color: #FFFFFF;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    }
+    .wa-glossy-cta:hover {
+      transform: translateY(-2px) scale(1.015);
+      box-shadow: 0 16px 32px rgba(16, 185, 129, 0.40), inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
     }
 
     /* Smooth Modal Backdrop & Spring Dialog */
@@ -493,6 +601,65 @@
     .github-site-logo:hover {
       transform: scale(1.08) rotate(-3deg);
     }
+  
+    /* True Bouncy Spring Keyframes for T.O.S Modal + Zero Scrollbar Pill */
+    @keyframes tosSpringBounceIn {
+      0% { opacity: 0; transform: scale(0.74) translateY(26px); }
+      55% { opacity: 1; transform: scale(1.045) translateY(-4px); }
+      78% { transform: scale(0.985) translateY(1px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    #custOfficialTosOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(58, 18, 40, 0.62);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.22s ease, visibility 0.22s ease;
+    }
+    #custOfficialTosOverlay.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+    #custOfficialTosOverlay .tos-ticket-modal-card {
+      width: 100%;
+      max-width: 430px;
+      max-height: 88dvh;
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      background: linear-gradient(180deg, #FFF3F8 0%, #FFEAF2 100%);
+      border: 2.5px dashed #D83162;
+      border-radius: 26px;
+      box-shadow: 0 22px 48px rgba(74, 24, 49, 0.32);
+      padding: 16px;
+      opacity: 0;
+      transform: scale(0.78) translateY(22px);
+    }
+    #custOfficialTosOverlay .tos-ticket-modal-card::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+    #custOfficialTosOverlay.open .tos-ticket-modal-card {
+      animation: tosSpringBounceIn 0.46s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes unlockBounce {
+      0% { transform: scale(0.95); }
+      55% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+    .testi-unlocked-pop { animation: unlockBounce 0.42s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
   </style>
 </head>
 <body class="flex items-center justify-center sm:p-3 overflow-hidden">
@@ -1060,41 +1227,50 @@
     <!-- HALAMAN 5 (KRITIK & SARAN):                          -->
     <!-- ==================================================== -->
     <section id="custPage4" class="page-view">
-      <div class="critique-card rounded-[30px] p-4 sm:p-5 text-center space-y-2 mt-1 relative z-30 pointer-events-auto">
+      <div id="custTestimonyCardWrap" class="critique-card rounded-[30px] p-4 sm:p-5 text-center space-y-2.5 relative z-30 pointer-events-auto overflow-hidden">
+        <!-- LOCK OVERLAY UNTIL WA POPUP CONFIRMED (NO WA BUTTONS ON PAGE — TAP OPENS POPUP) -->
+        <div id="custTestimonyLockOverlay" style="background: linear-gradient(148deg, rgba(255, 168, 202, 0.82) 0%, rgba(255, 204, 224, 0.78) 100%); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);" class="absolute inset-0 z-40 flex flex-col items-center justify-center p-4 text-center space-y-1.5 cursor-pointer">
+          <div class="w-11 h-11 rounded-2xl bg-white/70 border border-white flex items-center justify-center text-xl shadow-sm">🔒</div>
+          <div id="txtTestiLockedTitle" class="text-xs font-black text-[#4A1832]">Kotak Testimoni Masih Terkunci</div>
+          <p id="txtTestiLockedDesc" class="text-[10.5px] font-bold text-[#5E1B3B] max-w-[250px] leading-snug">
+            Ketuk kotak ini untuk membuka pop-up konfirmasi dulu yaa Kak, setelah itu testimoni langsung terbuka! 🌸
+          </p>
+        </div>
+
         <div class="flex flex-wrap items-center justify-center gap-1.5">
-          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-[#FFE5EE] text-[10px] font-extrabold">
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full frosted-glass-chip text-[10px] font-extrabold">
             <span>💗</span>
-            <span>LITTLE FEEDBACK BOX</span> <span>🐰</span>
+            <span id="txtFeedbackBadge">LITTLE FEEDBACK BOX</span> <span>🐰</span>
           </div>
-          <button id="copyOrderCodeFeedbackBtn" type="button" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FFE066] hover:bg-[#FFF099] text-[#4A1530] text-[10px] font-black shadow-sm transition cursor-pointer">
+          <button id="copyOrderCodeFeedbackBtn" type="button" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FFF3C4]/85 hover:bg-[#FFE899] border border-white/85 text-[#4A1530] text-[10px] font-black shadow-sm transition cursor-pointer backdrop-blur-sm">
             <span>📦 Simpan Kode:</span>
             <span id="feedbackOrderCodeLabel">ARC-0001</span>
             <span>📋</span>
           </button>
         </div>
-        <h2 id="txtThanksTitle" class="text-base sm:text-lg font-black text-white leading-snug">
+        <h2 id="txtThanksTitle" class="text-base sm:text-lg font-black text-[#4A2036] leading-snug">
           Thank you for purchasing at Archie’s!
         </h2>
-        <p id="txtCritiqueSub" class="text-[11px] text-[#FFE5EE] leading-relaxed font-semibold">
+        <p id="txtCritiqueSub" class="text-[11px] text-[#6D3B53] leading-relaxed font-semibold">
           kalau ada saran atau kritik, bisa disampaikan lewat kolom di bawah ini 💗
         </p>
 
-        <div class="flex flex-wrap justify-center gap-1 pt-0.5">
-          <button type="button" data-chip="Prosesnya cepet banget! ⚡" class="feedback-chip-btn px-2.5 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-[9px] font-extrabold border border-white/35 transition cursor-pointer">
+        <div class="flex flex-wrap justify-center gap-1.5 pt-0.5">
+          <button type="button" data-chip="Prosesnya cepet banget! ⚡" class="feedback-chip-btn frosted-glass-chip px-2.5 py-1 rounded-full text-[9.5px] font-extrabold transition cursor-pointer">
             + Proses cepet ⚡
           </button>
-          <button type="button" data-chip="Harganya ramah di kantong~ 🌸" class="feedback-chip-btn px-2.5 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-[9px] font-extrabold border border-white/35 transition cursor-pointer">
+          <button type="button" data-chip="Harganya ramah di kantong~ 🌸" class="feedback-chip-btn frosted-glass-chip px-2.5 py-1 rounded-full text-[9.5px] font-extrabold transition cursor-pointer">
             + Harga hemat 🌸
           </button>
-          <button type="button" data-chip="Mimin Archie ramah pol! 💗" class="feedback-chip-btn px-2.5 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-[9px] font-extrabold border border-white/35 transition cursor-pointer">
+          <button type="button" data-chip="Mimin Archie ramah pol! 💗" class="feedback-chip-btn frosted-glass-chip px-2.5 py-1 rounded-full text-[9.5px] font-extrabold transition cursor-pointer">
             + Mimin ramah 💗
           </button>
         </div>
 
         <textarea id="feedbackInput" rows="2" placeholder="Tulis saran atau kritik kamu di sini..."
-                  class="w-full p-2.5 rounded-2xl bg-[#FFF8FA] text-xs text-[#4A2036] placeholder-[#A6788C] font-semibold shadow-inner focus:outline-none border border-[#F5B8CE]"></textarea>
+                  class="w-full p-2.5 rounded-2xl bg-[#FFE8F1]/68 backdrop-blur-lg text-xs text-[#4A1832] placeholder-[#7D3A58] font-semibold shadow-inner focus:outline-none border border-white/75"></textarea>
 
-        <button id="submitFeedbackBtn" type="button" class="w-full py-2.5 rounded-full sweet-btn font-black text-xs sm:text-sm tracking-wide">
+        <button id="submitFeedbackBtn" type="button" class="w-full py-2.5 rounded-full frosted-glass-submit font-black text-xs sm:text-sm tracking-wide transition cursor-pointer">
           Kirim
         </button>
       </div>
@@ -1294,13 +1470,18 @@
             </div>
           </div>
 
-          <div class="space-y-1 pt-0.5">
+          <div class="space-y-1.5 pt-0.5">
             <button id="confirmDonationBtn" type="button" class="w-full py-2.5 rounded-full sweet-btn text-xs font-black tracking-wide">
               💖 Donasi &amp; Klaim Title "Donatur"!
             </button>
-            <button id="skipDonationBtn" type="button" class="w-full py-1 text-[10px] font-bold text-[#8E4668] hover:text-[#4A2036] transition cursor-pointer">
-              Skip dulu deh, langsung ke Spin 🎡 →
-            </button>
+            <div class="flex items-center justify-between gap-2 pt-0.5">
+              <button id="backFromDonationBtn" type="button" class="px-3 py-1.5 rounded-full bg-[#FFF0F6] hover:bg-[#FFE0EC] border border-[#F5B8CE] text-[10px] font-extrabold text-[#8E2452] transition cursor-pointer">
+                ← Kembali
+              </button>
+              <button id="skipDonationBtn" type="button" class="flex-1 py-1.5 text-[10px] font-bold text-[#8E4668] hover:text-[#4A2036] transition cursor-pointer text-right">
+                Skip dulu deh, langsung ke Spin 🎡 →
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1572,15 +1753,9 @@
     }
 
     // =====================================================
-    // SEQUENTIAL ORDER NUMBER ENGINE (MULAI DARI 0001: ARC-0001, ARC-0002, dst.)
+    // CANONICAL ORDER NUMBER ENGINE (100% ALIGNED WITH SUPABASE ID / ORDER_CODE)
     // =====================================================
-    let cachedNextSeqOrderNo = (() => {
-      try {
-        const saved = parseInt(localStorage.getItem('archie_seq_order_counter'), 10);
-        if (!isNaN(saved) && saved >= 0 && saved < 999) return saved + 1;
-      } catch (e) {}
-      return 1;
-    })();
+    let cachedNextSeqOrderNo = 1;
 
     function formatSequentialDigits(num) {
       const n = Math.max(1, parseInt(num, 10) || 1);
@@ -1589,16 +1764,50 @@
 
     function extractSeqNumFromRow(row) {
       if (!row) return 0;
-      const planStr = String(row.plan_label || '');
-      const m = planStr.match(/CODE:ARC-0*(\d+)/i);
-      if (m && m[1]) {
-        const parsed = parseInt(m[1], 10);
-        // Ignore legacy 4/5-digit random codes (like 81780); only accept true sequential numbers 1..999
-        if (parsed > 0 && parsed < 1000) return parsed;
+      if (row.order_code && /^ARC-0*(\d{1,6})$/i.test(String(row.order_code).trim())) {
+        return parseInt(String(row.order_code).trim().match(/^ARC-0*(\d{1,6})$/i)[1], 10) || 0;
       }
-      const rawId = parseInt(String(row.id || '').replace(/[^0-9]/g, ''), 10);
-      if (rawId > 0 && rawId < 1000) return rawId;
+      const mPlan = String(row.plan_label || '').match(/CODE:ARC-0*(\d{1,6})/i);
+      if (mPlan && mPlan[1]) return parseInt(mPlan[1], 10) || 0;
+      const rawIdStr = String(row.id || '').trim();
+      if (/^\d{1,6}$/.test(rawIdStr)) return parseInt(rawIdStr, 10) || 0;
       return 0;
+    }
+
+    function resolveCleanArcCodeFromRow(row, fallbackSeq = null) {
+      if (row && row.order_code) {
+        const m = String(row.order_code).trim().match(/^ARC-0*(\d{1,6})$/i);
+        if (m && m[1]) return 'ARC-' + String(parseInt(m[1], 10)).padStart(4, '0');
+      }
+      if (row && row.plan_label) {
+        const m2 = String(row.plan_label).match(/CODE:ARC-0*(\d{1,6})/i);
+        if (m2 && m2[1]) return 'ARC-' + String(parseInt(m2[1], 10)).padStart(4, '0');
+      }
+      if (row && row.id !== undefined && row.id !== null) {
+        const rawIdStr = String(row.id).trim();
+        // ONLY accept pure small numeric IDs (1..999999); NEVER extract digits from a UUID!
+        if (/^\d{1,6}$/.test(rawIdStr)) {
+          return 'ARC-' + String(parseInt(rawIdStr, 10)).padStart(4, '0');
+        }
+      }
+      const seq = Math.max(1, parseInt(fallbackSeq || cachedNextSeqOrderNo || 1, 10) || 1);
+      return 'ARC-' + String(seq).padStart(4, '0');
+    }
+
+    function applyCanonicalOrderCodeToUI(codeStr) {
+      if (!codeStr) return;
+      const m = String(codeStr).trim().match(/^ARC-0*(\d{1,6})$/i);
+      const clean = m ? ('ARC-' + String(parseInt(m[1], 10)).padStart(4, '0')) : String(codeStr).trim().toUpperCase();
+      // Guard: never display giant UUID digit strings!
+      if (/^ARC-\d{7,}$/i.test(clean)) return;
+      currentOrder.orderCode = clean;
+      currentOrder.orderNumber = clean.replace(/^ARC-/i, '');
+      const invEl = document.getElementById('receiptInvoiceNo');
+      if (invEl) invEl.textContent = `No: ${clean}`;
+      const qrisCodeEl = document.getElementById('qrisCardOrderCodeText');
+      if (qrisCodeEl) qrisCodeEl.textContent = clean;
+      const fbCodeEl = document.getElementById('feedbackOrderCodeLabel');
+      if (fbCodeEl) fbCodeEl.textContent = clean;
     }
 
     async function syncNextSequentialOrderNoFromSupabase() {
@@ -1606,63 +1815,20 @@
         let rows = null;
         const client = getSupabaseClient();
         if (client) {
-          const { data, error } = await client.from('orders').select('*');
+          const { data, error } = await client.from('orders').select('id,order_code').order('id', { ascending: false }).limit(1);
           if (!error && Array.isArray(data)) rows = data;
         }
         if (!rows) {
-          const res = await supabaseRestRequest('orders?select=*');
+          const res = await supabaseRestRequest('orders?select=id,order_code&order=id.desc&limit=1');
           if (Array.isArray(res)) rows = res;
         }
-        if (Array.isArray(rows)) {
-          rows.sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
-          if (rows.length === 0) {
-            cachedNextSeqOrderNo = 1;
-            try { localStorage.setItem('archie_seq_order_counter', '0'); } catch (e) {}
-          } else {
-            let maxSeq = 0;
-            rows.forEach((r) => {
-              const s = extractSeqNumFromRow(r);
-              if (s > maxSeq) maxSeq = s;
-            });
-            for (let i = 0; i < rows.length; i++) {
-              const r = rows[i];
-              const s = extractSeqNumFromRow(r);
-              if (s <= 0 || s >= 1000) {
-                const fixedSeq = maxSeq + 1;
-                maxSeq = fixedSeq;
-                const fixedCode = 'ARC-' + String(fixedSeq).padStart(4, '0');
-                const oldPlan = String(r.plan_label || '1 Bulan');
-                const newPlan = /CODE:ARC-[0-9]+/i.test(oldPlan)
-                  ? oldPlan.replace(/CODE:ARC-[0-9]+/i, `CODE:${fixedCode}`)
-                  : `${oldPlan} [GARANSI:UNCLAIMED|EXP:${Date.now() + 30*86400000}|CODE:${fixedCode}]`;
-                r.plan_label = newPlan;
-                try {
-                  if (client) {
-                    await client.from('orders').update({ plan_label: newPlan }).eq('id', r.id);
-                  } else {
-                    await supabaseRestRequest(`orders?id=eq.${encodeURIComponent(r.id)}`, {
-                      method: 'PATCH',
-                      body: JSON.stringify({ plan_label: newPlan })
-                    });
-                  }
-                } catch (e) {}
-              }
+        if (Array.isArray(rows) && rows.length > 0) {
+          const maxId = extractSeqNumFromRow(rows[0]);
+          if (maxId > 0) {
+            cachedNextSeqOrderNo = maxId + 1;
+            if (!currentOrder.dbOrderId) {
+              applyCanonicalOrderCodeToUI('ARC-' + formatSequentialDigits(cachedNextSeqOrderNo));
             }
-            let localSaved = 0;
-            try { localSaved = parseInt(localStorage.getItem('archie_seq_order_counter'), 10) || 0; } catch (e) {}
-            const highestUsed = Math.max(maxSeq, rows.length);
-            cachedNextSeqOrderNo = highestUsed + 1;
-            try { localStorage.setItem('archie_seq_order_counter', String(highestUsed)); } catch (e) {}
-          }
-          if (!currentOrder.dbOrderId) {
-            currentOrder.orderNumber = formatSequentialDigits(cachedNextSeqOrderNo);
-            currentOrder.orderCode = 'ARC-' + currentOrder.orderNumber;
-            const invEl = document.getElementById('receiptInvoiceNo');
-            if (invEl) invEl.textContent = `No: ${currentOrder.orderCode}`;
-            const qrisCodeEl = document.getElementById('qrisCardOrderCodeText');
-            if (qrisCodeEl) qrisCodeEl.textContent = currentOrder.orderCode;
-            const fbCodeEl = document.getElementById('feedbackOrderCodeLabel');
-            if (fbCodeEl) fbCodeEl.textContent = currentOrder.orderCode;
           }
           return cachedNextSeqOrderNo;
         }
@@ -2611,8 +2777,7 @@
         if (inserted && inserted.id) {
           currentOrder.dbOrderId = inserted.id;
           const seqFromRow = extractSeqNumFromRow(inserted) || cachedNextSeqOrderNo;
-          currentOrder.orderNumber = formatSequentialDigits(seqFromRow);
-          currentOrder.orderCode = 'ARC-' + currentOrder.orderNumber;
+          applyCanonicalOrderCodeToUI(resolveCleanArcCodeFromRow(inserted));
           cachedNextSeqOrderNo = seqFromRow + 1;
           currentOrder.lastAppliedStatus = 'WAITING_SECRET_PRICE';
           startRealtimeAndPollingForOrder(inserted.id);
@@ -3017,15 +3182,17 @@
         const hasActualDonationOnBill = currentOrder.donationAmount > 0;
         currentOrder.isDonatur = hasActualDonationOnBill;
 
-        if (!currentOrder.orderNumber) {
-          currentOrder.orderNumber = generateFiveDigitOrderNo();
-          currentOrder.orderCode = 'ARC-' + currentOrder.orderNumber;
+        if (currentOrder.dbOrderId && currentOrder.orderCode) {
+          applyCanonicalOrderCodeToUI(currentOrder.orderCode);
+        } else {
+          const invEl0 = document.getElementById('receiptInvoiceNo');
+          if (invEl0) invEl0.textContent = 'No: (Klik Minta QRIS)';
+          const qrisCodeEl0 = document.getElementById('qrisCardOrderCodeText');
+          if (qrisCodeEl0) qrisCodeEl0.textContent = 'Menunggu...';
+          const fbCodeEl0 = document.getElementById('feedbackOrderCodeLabel');
+          if (fbCodeEl0) fbCodeEl0.textContent = 'Menunggu...';
+          syncNextSequentialOrderNoFromSupabase();
         }
-        document.getElementById('receiptInvoiceNo').textContent = `No: ${currentOrder.orderCode}`;
-        const qrisCodeEl = document.getElementById('qrisCardOrderCodeText');
-        if (qrisCodeEl) qrisCodeEl.textContent = currentOrder.orderCode;
-        const fbCodeEl = document.getElementById('feedbackOrderCodeLabel');
-        if (fbCodeEl) fbCodeEl.textContent = currentOrder.orderCode;
         document.getElementById('qrisCardInitial').textContent = currentOrder.customerName;
         const donBadge = document.getElementById('qrisDonaturBadge');
         if (donBadge) donBadge.classList.toggle('hidden', !hasActualDonationOnBill);
@@ -3415,23 +3582,8 @@
         } catch (e) {}
       }
 
-      await syncNextSequentialOrderNoFromSupabase();
-      const seqId = Math.max(1, cachedNextSeqOrderNo);
-      currentOrder.orderNumber = formatSequentialDigits(seqId);
-      currentOrder.orderCode = 'ARC-' + currentOrder.orderNumber;
-      if (payload.plan_label) {
-        if (/CODE:ARC-[0-9]+/i.test(payload.plan_label)) {
-          payload.plan_label = payload.plan_label.replace(/CODE:ARC-[0-9]+/i, `CODE:${currentOrder.orderCode}`);
-        } else if (payload.plan_label.includes('[GARANSI:')) {
-          payload.plan_label = payload.plan_label.replace(']', `|CODE:${currentOrder.orderCode}]`);
-        } else {
-          const defaultExpMs = Date.now() + 30 * 24 * 3600 * 1000;
-          payload.plan_label = `${payload.plan_label} [GARANSI:UNCLAIMED|EXP:${defaultExpMs}|CODE:${currentOrder.orderCode}]`;
-        }
-      }
-      try { localStorage.setItem('archie_seq_order_counter', String(seqId)); } catch (e) {}
-      cachedNextSeqOrderNo = seqId + 1;
-      const payloadWithFiveId = Object.assign({ id: seqId }, payload);
+      // Let Supabase assign the canonical auto-increment id / order_code so Customer, Admin, and Garansi are 100% identical!
+      const payloadWithFiveId = Object.assign({}, payload);
 
       if (client) {
         try {
@@ -3484,6 +3636,11 @@
 
     function processIncomingOrderRow(row) {
       if (!row || typeof row !== 'object') return;
+
+      // Always keep Customer orderCode 100% synced with Supabase canonical 4-digit ARC-XXXX (never UUID!)
+      if (row.order_code && /^ARC-0*\d{1,6}$/i.test(String(row.order_code).trim())) {
+        applyCanonicalOrderCodeToUI(resolveCleanArcCodeFromRow(row));
+      }
 
       if (row.surprise_message && row.surprise_message !== currentOrder.lastSurpriseMessageSeen) {
         currentOrder.lastSurpriseMessageSeen = row.surprise_message;
@@ -3622,7 +3779,7 @@
       const baseCleanPlan = currentOrder.isDonatur
         ? `${currentOrder.durationLabel} • 👑 Donatur (+${formatRp(currentOrder.donationAmount)})`
         : currentOrder.durationLabel;
-      const savedPlanLabel = `${baseCleanPlan} [GARANSI:UNCLAIMED|EXP:${defaultExpMs}|CODE:${currentOrder.orderCode}]`;
+      const savedPlanLabel = `${baseCleanPlan} [GARANSI:UNCLAIMED|EXP:${defaultExpMs}]`;
 
       const orderPayload = {
         initials: savedInitials,
@@ -3639,10 +3796,18 @@
         const savedRow = await insertOrUpdateOrderInSupabase(orderPayload, true);
         if (savedRow && savedRow.id) {
           currentOrder.dbOrderId = savedRow.id;
-          const seqFromRow = extractSeqNumFromRow(savedRow) || cachedNextSeqOrderNo;
-          currentOrder.orderNumber = formatSequentialDigits(seqFromRow);
-          currentOrder.orderCode = 'ARC-' + currentOrder.orderNumber;
-          cachedNextSeqOrderNo = seqFromRow + 1;
+          const serverCode = resolveCleanArcCodeFromRow(savedRow);
+          applyCanonicalOrderCodeToUI(serverCode);
+          // Ensure plan_label in Supabase carries the exact same serverCode if direct-insert was used
+          try {
+            if (!savedRow.order_code) {
+              const patchedPlan = String(savedRow.plan_label || savedPlanLabel).replace(/CODE:ARC-[A-Z0-9-]+/i, 'CODE:' + serverCode);
+              const client = getSupabaseClient();
+              if (client) {
+                client.from('orders').update({ order_code: serverCode, plan_label: patchedPlan }).eq('id', savedRow.id);
+              }
+            }
+          } catch (_) {}
           startRealtimeAndPollingForOrder(savedRow.id);
         }
       } catch (e) {}
@@ -3864,7 +4029,7 @@
     async function handleCustomerSubmitFeedback() {
       const feedbackEl = document.getElementById('feedbackInput');
       const rawFeedback = feedbackEl ? feedbackEl.value.trim() : '';
-      const finalFeedback = rawFeedback || 'Terima kasih banyak Archie! <3';
+      const finalFeedback = `[CUST_TESTI|${new Date().toISOString()}] ${rawFeedback || 'Terima kasih banyak Archie! <3'}`;
 
       showCustomerToast("Thank you udah jajan di Archie'pelago~ 💗", 'feedbackThanks');
       if (feedbackEl) feedbackEl.value = '';
@@ -4268,35 +4433,63 @@
       } catch (e) {}
     };
 
-    syncNextSequentialOrderNoFromSupabase = async function() {
-      return cachedNextSeqOrderNo;
-    };
-
-    insertOrUpdateOrderInSupabase = async function(payload, _updateExisting) {
+    // Keep syncNextSequentialOrderNoFromSupabase LIVE so Customer.html always previews the true next ARC-XXXX!
+    const __origInsertOrUpdateOrder = insertOrUpdateOrderInSupabase;
+    insertOrUpdateOrderInSupabase = async function(payload, updateExisting) {
       const tok = getOrCreateCheckoutToken();
-      const res = await callCustRpc('create_order', {
-        p_initials: payload.initials || currentOrder.customerName || '👀S',
-        p_product_name: payload.product_name || currentOrder.productName || 'PRODUK',
-        p_plan_label: payload.plan_label || currentOrder.durationLabel || '1 Bulan',
-        p_base_price: Number(payload.base_price ?? currentOrder.basePrice) || 0,
-        p_donation_amount: Number(payload.donation_amount ?? currentOrder.donationAmount) || 0,
-        p_spin_requested: Boolean(currentOrder.hasSpun),
-        p_checkout_token: tok,
-        p_status: payload.status || 'QRIS_REQUESTED'
-      });
-      if (res && res.id) {
-        currentOrder.dbOrderId = res.id;
-        currentOrder.orderCode = res.order_code || currentOrder.orderCode;
-        currentOrder.orderNumber = String(currentOrder.orderCode).replace(/[^0-9]/g, '').padStart(4, '0');
-        currentOrder.discountPct = Number(res.discount_pct ?? currentOrder.discountPct);
-        currentOrder.savedAmount = Number(res.saved_amount ?? currentOrder.savedAmount);
-        currentOrder.finalPrice = Number(res.final_price ?? currentOrder.finalPrice);
-        try {
-          sessionStorage.setItem('archie_checkout_token', res.checkout_token || tok);
-          sessionStorage.setItem('archie_active_order_id', String(res.id));
-        } catch (e) {}
+      const normalizedStatus = payload.status || 'WAITING_QRIS';
+      try {
+        const res = await callCustRpc('create_order', {
+          p_initials: payload.initials || currentOrder.customerName || '👀S',
+          p_product_name: payload.product_name || currentOrder.productName || 'PRODUK',
+          p_plan_label: payload.plan_label || currentOrder.durationLabel || '1 Bulan',
+          p_base_price: Number(payload.base_price ?? currentOrder.basePrice) || 0,
+          p_donation_amount: Number(payload.donation_amount ?? currentOrder.donationAmount) || 0,
+          p_spin_requested: Boolean(currentOrder.hasSpun),
+          p_checkout_token: tok,
+          p_status: normalizedStatus
+        });
+        if (res && res.id) {
+          currentOrder.dbOrderId = res.id;
+          const serverCode = resolveCleanArcCodeFromRow(res);
+          applyCanonicalOrderCodeToUI(serverCode);
+          currentOrder.discountPct = Number(res.discount_pct ?? currentOrder.discountPct);
+          currentOrder.savedAmount = Number(res.saved_amount ?? currentOrder.savedAmount);
+          currentOrder.finalPrice = Number(res.final_price ?? currentOrder.finalPrice);
+          try {
+            sessionStorage.setItem('archie_checkout_token', res.checkout_token || tok);
+            sessionStorage.setItem('archie_active_order_id', String(res.id));
+          } catch (e) {}
+          return res;
+        }
+      } catch (rpcErr) {
+        console.warn('RPC create_order fallback ke direct insert:', rpcErr);
       }
-      return res;
+
+      // Automatic fallback: direct insert/update to public.orders with clean 4-digit ARC-XXXX (never UUID!)
+      try {
+        await syncNextSequentialOrderNoFromSupabase();
+        const fallbackCode = 'ARC-' + formatSequentialDigits(cachedNextSeqOrderNo);
+        const fallbackPayload = Object.assign({}, payload, { status: normalizedStatus, order_code: fallbackCode });
+        const directRes = await __origInsertOrUpdateOrder(fallbackPayload, updateExisting);
+        if (directRes && directRes.id) {
+          currentOrder.dbOrderId = directRes.id;
+          const serverCode = resolveCleanArcCodeFromRow(directRes, cachedNextSeqOrderNo);
+          applyCanonicalOrderCodeToUI(serverCode);
+          if (!directRes.order_code) {
+            try {
+              const client = getSupabaseClient();
+              if (client) await client.from('orders').update({ order_code: serverCode }).eq('id', directRes.id);
+              directRes.order_code = serverCode;
+            } catch (_) {}
+          }
+          try { sessionStorage.setItem('archie_active_order_id', String(directRes.id)); } catch (e) {}
+        }
+        return directRes;
+      } catch (e2) {
+        console.error('Direct order insert error:', e2);
+        return null;
+      }
     };
 
     startRealtimeAndPollingForOrder = function(orderId) {
@@ -4305,13 +4498,26 @@
       const tok = getOrCreateCheckoutToken();
       activeOrderPollTimer = setInterval(async () => {
         if (!currentOrder.dbOrderId) return;
+        let row = null;
         try {
-          const row = await callCustRpc('get_checkout_status', {
+          row = await callCustRpc('get_checkout_status', {
             p_order_id: String(currentOrder.dbOrderId),
             p_checkout_token: tok
           });
-          if (row) processIncomingOrderRow(row);
         } catch (e) {}
+        if (!row) {
+          try {
+            const client = getSupabaseClient();
+            if (client) {
+              const { data } = await client.from('orders').select('*').eq('id', currentOrder.dbOrderId).maybeSingle();
+              if (data) row = data;
+            } else {
+              const rows = await supabaseRestRequest(`orders?id=eq.${encodeURIComponent(currentOrder.dbOrderId)}&select=*`);
+              if (Array.isArray(rows) && rows[0]) row = rows[0];
+            }
+          } catch (e2) {}
+        }
+        if (row) processIncomingOrderRow(row);
       }, 2500);
     };
 
@@ -4712,16 +4918,7 @@
       '  box-shadow: 0 6px 14px rgba(216,49,98,0.28);' +
       '}' +
       '.vending-app-pill.active .v-app-sub { color: #FFE5EE !important; }' +
-      '#custOfficialTosOverlay {' +
-      '  position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center;' +
-      '  padding: 16px; background: rgba(58, 18, 40, 0.68); backdrop-filter: blur(5px);' +
-      '}' +
-      '#custOfficialTosOverlay.open { display: flex !important; }' +
-      '.tos-ticket-modal-card {' +
-      '  width: 100%; max-width: 430px; max-height: 88dvh; overflow-y: auto;' +
-      '  background: #FFFDF9; border: 2.5px dashed #D83162; border-radius: 26px;' +
-      '  box-shadow: 0 22px 48px rgba(74, 24, 49, 0.35); padding: 18px;' +
-      '}';
+      '.tos-ticket-modal-card::-webkit-scrollbar { display: none !important; width: 0 !important; }';
     document.head.appendChild(styleEl);
 
     var liveCms = window.ArchieLiveCms.getCached();
@@ -4796,18 +4993,18 @@
             '<button id="closeTosModalXBtn" type="button" class="w-8 h-8 rounded-full bg-[#FFE5EE] hover:bg-[#FFD0E2] text-[#4A2036] font-black text-xs flex items-center justify-center shrink-0 cursor-pointer">✕</button>' +
           '</div>' +
 
-          '<!-- BAGIAN 2 (HIGHLIGHT): T.O.S KHUSUS APLIKASI (PER-APP T.O.S) -->' +
-          '<div class="bg-gradient-to-br from-[#FFF0F6] to-[#FFE4F0] border-2 border-[#D83162] rounded-2xl p-3 space-y-1.5">' +
+          '<!-- BAGIAN KHUSUS APLIKASI (PER-APP T.O.S — HANYA TAMPIL SAAT KLIK T.O.S APLIKASI) -->' +
+          '<div id="tosPerAppSection" class="hidden bg-gradient-to-br from-[#FFF0F6] to-[#FFE4F0] border-2 border-[#D83162] rounded-2xl p-3 space-y-1.5">' +
             '<div class="flex items-center justify-between gap-1">' +
               '<span class="text-[9.5px] font-black text-[#D83162] uppercase tracking-wider">🛡️ T.O.S KHUSUS APLIKASI DIPILIH</span>' +
-              '<span id="tosPerAppBadge" class="px-2 py-0.5 rounded-full bg-[#D83162] text-white text-[8.5px] font-black">Per-App</span>' +
+              
             '</div>' +
             '<div id="tosPerAppName" class="text-xs font-black text-[#4A2036]">🎬 NETFLIX PREMIUM UHD 4K</div>' +
             '<ul id="tosPerAppPointsList" class="list-disc pl-4 space-y-1 text-[10.5px] font-bold text-[#4A2036] leading-relaxed"></ul>' +
           '</div>' +
 
-          '<!-- BAGIAN 1: T.O.S UMUM TOKO ARCHIEPELAGO (STORE T.O.S) -->' +
-          '<div class="space-y-1.5">' +
+          '<!-- BAGIAN T.O.S UMUM TOKO (STORE T.O.S — HANYA TAMPIL SAAT KLIK T.O.S AWAL / HEADER) -->' +
+          '<div id="tosStoreSection" class="space-y-1.5">' +
             '<div class="text-[10px] font-black uppercase tracking-wider text-[#8E2452]">📜 T.O.S UMUM TOKO ARCHIE\'PELAGO (STORE T.O.S)</div>' +
             '<div id="tosStorePointsList" class="space-y-1.5"></div>' +
           '</div>' +
@@ -4871,17 +5068,123 @@
       }
     }
 
-    function openDualTosModal() {
+    function openDualTosModal(mode) {
+      var targetMode = (mode === 'app') ? 'app' : 'store';
       renderDualTosModal();
+      var perAppSec = document.getElementById('tosPerAppSection');
+      var storeSec = document.getElementById('tosStoreSection');
+      var titleEl = document.getElementById('tosModalMainTitle');
+      var storeTos = (liveCms && liveCms.storeTos) ? liveCms.storeTos : window.ARCHIE_DEFAULT_CMS.storeTos;
+
+      if (targetMode === 'app') {
+        if (perAppSec) perAppSec.classList.remove('hidden');
+        if (storeSec) storeSec.classList.add('hidden');
+        if (titleEl) titleEl.textContent = '🛡️ T.O.S KHUSUS APLIKASI';
+      } else {
+        if (perAppSec) perAppSec.classList.add('hidden');
+        if (storeSec) storeSec.classList.remove('hidden');
+        if (titleEl) titleEl.textContent = (storeTos && storeTos.title) ? storeTos.title : '📜 TERMS OF SERVICE TOKO ARCHIE\'PELAGO';
+      }
+
       var ov = document.getElementById('custOfficialTosOverlay');
-      if (ov) ov.classList.add('open');
+      if (ov) {
+        var card = ov.querySelector('.tos-ticket-modal-card');
+        if (card) {
+          card.style.animation = 'none';
+          void card.offsetWidth;
+          card.style.animation = '';
+        }
+        ov.classList.add('open');
+      }
     }
 
-    // Bind T.O.S Buttons cleanly
+    // Bind T.O.S Buttons cleanly — T.O.S Awal/Header HANYA buka Store T.O.S!
     var hdrTos = document.getElementById('custHeaderTosBtn');
-    if (hdrTos) hdrTos.addEventListener('click', openDualTosModal);
+    if (hdrTos) hdrTos.addEventListener('click', function() { openDualTosModal('store'); });
+    // Build Smooth Spring WA Confirmation Popup Modal (outside the levitating testimony card)
+    var waPopupConfirmed = false;
+    if (!document.getElementById('custWaPopupOverlay')) {
+      var waOv = document.createElement('div');
+      waOv.id = 'custWaPopupOverlay';
+      waOv.innerHTML =
+        '<div class="wa-popup-card text-center space-y-3.5 relative">' +
+          '<button id="closeWaPopupBtn" type="button" class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-[#FFE4EE] hover:bg-[#FFD0E2] text-[#4A2036] font-black text-xs flex items-center justify-center cursor-pointer transition">✕</button>' +
+          '<div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-[#D1FAE5] via-[#FFF8E7] to-[#FFE4EE] border-2 border-white shadow-md flex items-center justify-center text-3xl">💬</div>' +
+          '<div class="space-y-1">' +
+            '<span class="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-[#FFF3D6] border border-[#F5D693] text-[#9A5B13] text-[9.5px] font-black uppercase tracking-wider">✨ LANGKAH TERAKHIR</span>' +
+            '<h3 id="txtWaGateBannerTitle" class="text-sm sm:text-base font-black text-[#4A2036] leading-snug">Konfirmasi Pesanan ke WA Mimin dulu yaa!</h3>' +
+            '<p class="text-[11px] font-semibold text-[#6D3B53] leading-relaxed">Klik tombol di bawah untuk kirim kode pesanan ke WhatsApp Mimin Archie. Setelah itu, kotak testimoni otomatis terbuka! 🌸</p>' +
+          '</div>' +
+          '<button id="custWaPopupConfirmBtn" type="button" class="wa-glossy-cta w-full py-3 px-4 rounded-full font-black text-xs sm:text-sm inline-flex items-center justify-center gap-2 cursor-pointer">' +
+            '<span>💬</span><span>Konfirmasi ke WA Mimin Archie ↗</span>' +
+          '</button>' +
+          '<button id="laterWaPopupBtn" type="button" class="text-[10.5px] font-bold text-[#9A637B] hover:text-[#D83162] cursor-pointer transition">Nanti dulu</button>' +
+        '</div>';
+      document.body.appendChild(waOv);
+
+      var closeWaPopup = function() { waOv.classList.remove('open'); };
+      var openWaPopup = function() {
+        var card = waOv.querySelector('.wa-popup-card');
+        if (card) { card.style.animation = 'none'; void card.offsetWidth; card.style.animation = ''; }
+        waOv.classList.add('open');
+      };
+      window.openCustWaConfirmPopup = openWaPopup;
+
+      document.getElementById('closeWaPopupBtn').addEventListener('click', closeWaPopup);
+      document.getElementById('laterWaPopupBtn').addEventListener('click', closeWaPopup);
+      waOv.addEventListener('click', function(e) { if (e.target === waOv) closeWaPopup(); });
+
+      document.getElementById('custWaPopupConfirmBtn').addEventListener('click', function() {
+        var ui = (liveCms && liveCms.customerUi) ? liveCms.customerUi : (window.ARCHIE_DEFAULT_CMS ? window.ARCHIE_DEFAULT_CMS.customerUi : {});
+        var waNum = String(ui.waAdminNumber || ui.waNumber || '').replace(/[^0-9]/g, '');
+        var tpl = ui.waCheckoutTemplate || ui.checkoutWaTemplate || "Halo Mimin Archie! 🌸\nAku sudah checkout pesanan {order_code} ({product_name} - {plan_label}) total {total_price}. Ini bukti pembayarannya yaa! 🐰✨";
+        var ord = (typeof currentOrder !== 'undefined' && currentOrder) ? currentOrder : {};
+        var msg = tpl
+          .replace(/\{order_code\}/g, ord.orderCode || 'ARC-0001')
+          .replace(/\{customer_name\}/g, ord.customerName || 'Customer')
+          .replace(/\{product_name\}/g, ord.productName || 'Aplikasi Premium')
+          .replace(/\{plan_label\}/g, ord.durationLabel || '1 Bulan')
+          .replace(/\{duration_label\}/g, ord.durationLabel || '1 Bulan')
+          .replace(/\{total_price\}/g, typeof formatRp === 'function' ? formatRp(ord.finalPrice || 0) : ('Rp ' + (ord.finalPrice || 0)))
+          .replace(/\{discount_info\}/g, (ord.discountPct || 0) > 0 ? ('Diskon Gacha ' + ord.discountPct + '%') : 'Tanpa Diskon');
+        var url = (waNum ? ('https://wa.me/' + waNum) : 'https://wa.me/') + '?text=' + encodeURIComponent(msg);
+        window.open(url, '_blank', 'noopener');
+
+        waPopupConfirmed = true;
+        closeWaPopup();
+        var lockOv = document.getElementById('custTestimonyLockOverlay');
+        var cardWrap = document.getElementById('custTestimonyCardWrap');
+        if (lockOv) lockOv.style.display = 'none';
+        if (cardWrap) {
+          cardWrap.classList.remove('testi-unlocked-pop');
+          void cardWrap.offsetWidth;
+          cardWrap.classList.add('testi-unlocked-pop');
+        }
+      });
+
+      var lockOvEl = document.getElementById('custTestimonyLockOverlay');
+      if (lockOvEl) lockOvEl.addEventListener('click', openWaPopup);
+
+      // Auto-pop WA modal smoothly whenever #custPage4 becomes active!
+      var page4El = document.getElementById('custPage4');
+      if (page4El && typeof MutationObserver !== 'undefined') {
+        var obs = new MutationObserver(function() {
+          if (page4El.classList.contains('active') && !waPopupConfirmed) {
+            setTimeout(openWaPopup, 320);
+          }
+        });
+        obs.observe(page4El, { attributes: true, attributeFilter: ['class'] });
+      }
+    }
+    var backDonBtn = document.getElementById('backFromDonationBtn');
+    if (backDonBtn) {
+      backDonBtn.addEventListener('click', function() {
+        var dm = document.getElementById('donationModal');
+        if (dm) dm.classList.remove('open');
+      });
+    }
     var hmTos = document.getElementById('custHomeTosBtn');
-    if (hmTos) hmTos.addEventListener('click', openDualTosModal);
+    if (hmTos) hmTos.addEventListener('click', function() { openDualTosModal('store'); });
 
     // 5. Build Vending Machine Window + Bottom Price Drawer + Peeking Chibi Sparxie on custPage1
     var page1 = document.getElementById('custPage1');
@@ -4979,7 +5282,7 @@
       document.getElementById('peekingSecretMenuBtn').addEventListener('click', function() {
         openProductDurationModal('secret_menu');
       });
-      document.getElementById('vmTosMiniBtn').addEventListener('click', openDualTosModal);
+      document.getElementById('vmTosMiniBtn').addEventListener('click', function() { openDualTosModal('app'); });
       document.getElementById('vmGoToSpinBtn').addEventListener('click', function() {
         var origBtn = document.getElementById('goToWheelBtn');
         if (origBtn) origBtn.click();
@@ -5177,10 +5480,7 @@
         '<div class="grid grid-cols-2 gap-1.5">' +
           '<button id="custSaveQrisBtn" type="button" class="py-1.5 px-2 rounded-xl bg-[#FFF0F6] hover:bg-[#FFE0EC] border border-[#F5B8CE] text-[#4A2036] text-[9.5px] font-black cursor-pointer">📥 Simpan QRIS</button>' +
           '<button id="custChangeOrderBtn" type="button" class="py-1.5 px-2 rounded-xl bg-[#FFF0F6] hover:bg-[#FFE0EC] border border-[#F5B8CE] text-rose-700 text-[9.5px] font-black cursor-pointer">🔄 Ganti Produk</button>' +
-        '</div>' +
-        '<button id="custCheckoutWaRedirectBtn" type="button" class="w-full py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[10.5px] font-black shadow-sm cursor-pointer transition">' +
-          '📲 Konfirmasi Pembayaran ke WA Mimin Archie' +
-        '</button>';
+        '</div>';
       qrisSubcard.appendChild(actDiv);
 
       document.getElementById('custSaveQrisBtn').addEventListener('click', function() {
@@ -5202,27 +5502,8 @@
         showCustomerToast('🔄 Silakan pilih ulang aplikasi atau durasi yang diinginkan yaa~ 🌸', 'camBlush');
       });
 
-      document.getElementById('custCheckoutWaRedirectBtn').addEventListener('click', function() {
-        var wa = buildDynamicCheckoutWaUrl();
-        copyTextToClipboard(wa.text, 'Pesan WA disalin & mengarahkan ke WhatsApp Mimin Archie~ 📲');
-        window.open(wa.url, '_blank', 'noopener');
-      });
     }
-
-    // Also add WA Admin button on Page 5 (custPage4 Feedback / Thank You)
-    var fbSubmitBtn = document.getElementById('submitFeedbackBtn');
-    if (fbSubmitBtn && !document.getElementById('custFinalPageWaBtn')) {
-      var finalWaBtn = document.createElement('button');
-      finalWaBtn.id = 'custFinalPageWaBtn';
-      finalWaBtn.type = 'button';
-      finalWaBtn.className = 'w-full py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] shadow-sm cursor-pointer transition';
-      finalWaBtn.textContent = '📲 Lanjut ke WhatsApp Mimin Archie';
-      fbSubmitBtn.parentNode.appendChild(finalWaBtn);
-      finalWaBtn.addEventListener('click', function() {
-        var wa = buildDynamicCheckoutWaUrl();
-        window.open(wa.url, '_blank', 'noopener');
-      });
-    }
+    // Zero extra WA buttons on Page 5 — WA confirmation is handled purely by the smooth spring WA popup!
 
     // 7. Apply 100% Dynamic Texts from Live CMS (Supabase + localStorage)
     function applyCmsConfigToCustomer(cfg) {
@@ -5245,7 +5526,13 @@
       setText('peekingSecretBannerLabel', ui.secretBannerText);
       setText('wheelBannerTitle', ui.gachaBannerText);
       setText('custHeaderTosBtn', ui.tosBtnLabel);
-      setText('custCheckoutWaRedirectBtn', ui.waCheckoutBtnLabel);
+      setText('custHomeTosBtn', ui.homeTosBtnLabel);
+      setText('txtThanksTitle', ui.thanksTitle);
+      setText('txtCritiqueSub', ui.critiqueSubtitle);
+      setText('submitFeedbackBtn', ui.feedbackSubmitLabel);
+      setText('confirmDonationBtn', ui.donationConfirmLabel);
+      setText('skipDonationBtn', ui.donationSkipLabel);
+      setText('requestQrisBtn', ui.requestQrisBtnLabel);
 
       var whText = document.getElementById('custWorkHoursText');
       var whBadge = document.getElementById('custWorkHoursBadge');
