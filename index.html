@@ -1061,7 +1061,7 @@
             <div id="printBand5" class="print-band px-1 text-[10px]">
               <div class="flex items-center justify-between text-[#7A4961] font-semibold">
                 <span id="pUnitFeeLabel" class="print-unit">Biaya Layanan &amp; Admin</span>
-                <span id="pUnitFeeVal" class="print-unit font-extrabold text-emerald-600">Rp 0 (FREE ✅)</span>
+                <span id="pUnitFeeVal" class="print-unit font-extrabold text-emerald-600">Rp 0 (FREE)</span>
               </div>
             </div>
 
@@ -1826,6 +1826,16 @@
 
     async function syncNextSequentialOrderNoFromSupabase() {
       try {
+        if (typeof callCustRpc === 'function') {
+          const nextRes = await callCustRpc('get_next_arc_code', {});
+          const nextCode = (nextRes && typeof nextRes === 'object') ? nextRes.next_code : (typeof nextRes === 'string' ? nextRes : '');
+          if (nextCode && /^ARC-\d{4,6}$/i.test(String(nextCode).trim())) {
+            const num = parseInt(String(nextCode).replace(/[^0-9]/g, ''), 10) || 1;
+            cachedNextSeqOrderNo = num;
+            if (!currentOrder.dbOrderId) applyCanonicalOrderCodeToUI(String(nextCode).trim().toUpperCase());
+            return cachedNextSeqOrderNo;
+          }
+        }
         let rows = null;
         const client = getSupabaseClient();
         if (client) {
@@ -1983,7 +1993,7 @@
       } else {
         currentOrder.donationAmount = Math.max(0, Number(manualDonationAmount) || 0);
       }
-      currentOrder.isDonatur = (currentOrder.donationAmount > 0) || currentOrder.autoRoundDonation;
+      currentOrder.isDonatur = currentOrder.donationAmount > 0;
       // Di halaman Spin Wheel (step 2), kalau autoRoundDonation aktif, tampilkan harga diskon murni dulu; masuknya pas bill terakhir (step 3)
       if (currentOrder.autoRoundDonation && !isOnFinalBill) {
         currentOrder.finalPrice = discountedPrice;
@@ -2674,7 +2684,7 @@
       if (currentOrder.autoRoundDonation) {
         manualDonationAmount = 0;
         currentOrder.donationAmount = 0;
-        currentOrder.isDonatur = true;
+        currentOrder.isDonatur = false;
       } else if (parsedInput > 0) {
         manualDonationAmount = parsedInput;
         currentOrder.donationAmount = parsedInput;
@@ -4333,13 +4343,23 @@
       });
 
       document.getElementById('copyOrderSummaryBtn').addEventListener('click', () => {
-        const summary = `Struk Archie'pelago (${currentOrder.orderCode}): ${currentOrder.customerName}${currentOrder.isDonatur ? ' (👑 Donatur)' : ''} | ${currentOrder.productName} (${currentOrder.durationLabel}) | Diskon ${currentOrder.discountPct}% | Total: ${formatRp(currentOrder.finalPrice)}`;
+        const verifiedCode = getVerifiedCodeForCopy();
+        if (!verifiedCode) { showCustomerToast('Klik tombol Minta QRIS dulu yaa Kak supaya nomor antrean resmi keluar~ 🐰', 'waitPout'); return; }
+        const summary = `Struk Archie'pelago (${verifiedCode}): ${currentOrder.customerName}${currentOrder.isDonatur ? ' (👑 Donatur)' : ''} | ${currentOrder.productName} (${currentOrder.durationLabel}) | Diskon ${currentOrder.discountPct}% | Total: ${formatRp(currentOrder.finalPrice)}`;
         copyTextToClipboard(summary, `Struk & kode ${currentOrder.orderCode} berhasil disalin~ 📋`);
       });
+      function getVerifiedCodeForCopy() {
+        if (currentOrder.dbOrderId && currentOrder.orderCode && /^ARC-\d{4,6}$/i.test(currentOrder.orderCode)) return currentOrder.orderCode;
+        const domTxt = ((document.getElementById('receiptInvoiceNo') || {}).textContent || '').replace(/^No:\s*/i, '').trim();
+        if (/^ARC-\d{4,6}$/i.test(domTxt)) return domTxt.toUpperCase();
+        return '';
+      }
       const copyInvBtn = document.getElementById('pUnit2');
       if (copyInvBtn) {
         copyInvBtn.addEventListener('click', () => {
-          copyTextToClipboard(currentOrder.orderCode, `Nomor Pesanan ${currentOrder.orderCode} berhasil disalin~ 📋`);
+          const c = getVerifiedCodeForCopy();
+          if (!c) { showCustomerToast('Klik tombol Minta QRIS dulu yaa Kak supaya nomor antrean resmi keluar~ 🐰', 'waitPout'); return; }
+          copyTextToClipboard(c, `Nomor Pesanan ${c} berhasil disalin~ 📋`);
         });
       }
       const copyQrisCodeBtn = document.getElementById('copyOrderCodeQrisBadgeBtn');
@@ -4370,7 +4390,12 @@
 
 
       document.getElementById('goToFeedbackBtn').addEventListener('click', () => {
-        
+        if (currentOrder.dbOrderId && typeof callCustRpc === 'function') {
+          try {
+            const tok = (typeof getOrCreateCheckoutToken === 'function') ? getOrCreateCheckoutToken() : '';
+            callCustRpc('record_customer_paid_confirmed', { p_order_id: String(currentOrder.dbOrderId), p_checkout_token: tok }).catch(() => {});
+          } catch (_) {}
+        }
         goToCustomerStep(4);
       });
 
@@ -4476,9 +4501,11 @@
             currentOrder.dbOrderId = res.id;
             const serverCode = resolveCleanArcCodeFromRow(res);
             applyCanonicalOrderCodeToUI(serverCode);
-            currentOrder.discountPct = Number(res.discount_pct ?? currentOrder.discountPct);
-            currentOrder.savedAmount = Number(res.saved_amount ?? currentOrder.savedAmount);
-            currentOrder.finalPrice = Number(res.final_price ?? currentOrder.finalPrice);
+            if (Number(res.discount_pct) > 0 || !currentOrder.hasSpun) {
+              currentOrder.discountPct = Number(res.discount_pct ?? currentOrder.discountPct);
+              currentOrder.savedAmount = Number(res.saved_amount ?? currentOrder.savedAmount);
+              currentOrder.finalPrice = Number(res.final_price ?? currentOrder.finalPrice);
+            }
             try {
               sessionStorage.setItem('archie_checkout_token', res.checkout_token || tok);
               sessionStorage.setItem('archie_active_order_id', String(res.id));
@@ -4899,7 +4926,7 @@
 // ARCHIE'PELAGO FINAL PRODUCTION — CUSTOMER.HTML ENGINE
 // - Vending Machine Window + Bottom Price Drawer (100dvh Zero-Scroll)
 // - Peeking Chibi Sparxie Secret Menu
-// - Unconditional Gacha Spin Diskon (0.5%-5%, zero minimal belanja)
+// - Unconditional Gacha Spin Diskon (1%-5%, zero minimal belanja)
 // - Fixed Dual T.O.S Modal (Store T.O.S + Per-App T.O.S) attached to body z-[99]
 // - Dynamic WA Admin Redirect at End of Checkout (live from Editor.html)
 // - 100% Dynamic Texts synced live from Supabase store_cms_config
