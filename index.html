@@ -3803,7 +3803,11 @@
       const baseCleanPlan = currentOrder.isDonatur
         ? `${currentOrder.durationLabel} • 👑 Donatur (+${formatRp(currentOrder.donationAmount)})`
         : currentOrder.durationLabel;
-      const savedPlanLabel = `${baseCleanPlan} [GARANSI:UNCLAIMED|EXP:${defaultExpMs}]`;
+      const custDataClean = currentOrder.customerInputData
+        ? String(currentOrder.customerInputData).replace(/[\|\[\]]/g, ' ').trim()
+        : '';
+      const custDataTag = custDataClean ? `|CUST_DATA:${custDataClean}` : '';
+      const savedPlanLabel = `${baseCleanPlan} [GARANSI:UNCLAIMED|EXP:${defaultExpMs}${custDataTag}]`;
 
       const orderPayload = {
         initials: savedInitials,
@@ -4390,11 +4394,38 @@
 
 
       document.getElementById('goToFeedbackBtn').addEventListener('click', () => {
-        if (currentOrder.dbOrderId && typeof callCustRpc === 'function') {
-          try {
-            const tok = (typeof getOrCreateCheckoutToken === 'function') ? getOrCreateCheckoutToken() : '';
-            callCustRpc('record_customer_paid_confirmed', { p_order_id: String(currentOrder.dbOrderId), p_checkout_token: tok }).catch(() => {});
-          } catch (_) {}
+        const nowIso = new Date().toISOString();
+        try {
+          const arcCode = currentOrder.orderCode || '';
+          if (arcCode) localStorage.setItem('archie_paid_at_' + arcCode, nowIso);
+        } catch (_) {}
+        if (currentOrder.dbOrderId) {
+          const ordIdStr = String(currentOrder.dbOrderId);
+          const tok = (typeof getOrCreateCheckoutToken === 'function') ? getOrCreateCheckoutToken() : '';
+          const fallbackDirectPatch = () => {
+            try {
+              fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(ordIdStr)}&select=plan_label`, {
+                headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
+              }).then(r => r.ok ? r.json() : []).then(rows => {
+                let pl = (Array.isArray(rows) && rows[0] && rows[0].plan_label) ? String(rows[0].plan_label) : (currentOrder.planLabel || '1 Bulan');
+                if (!/PAID_AT:/i.test(pl)) {
+                  pl = pl.includes(']') ? pl.replace(/\]$/, '|PAID_AT:' + nowIso + ']') : (pl + ' [GARANSI:UNCLAIMED|PAID_AT:' + nowIso + ']');
+                }
+                return fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(ordIdStr)}`, {
+                  method: 'PATCH',
+                  headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+                  body: JSON.stringify({ paid_at: nowIso, plan_label: pl })
+                });
+              }).catch(() => {});
+            } catch (_) {}
+          };
+          if (typeof callCustRpc === 'function') {
+            callCustRpc('record_customer_paid_confirmed', { p_order_id: ordIdStr, p_checkout_token: tok })
+              .then(res => { if (!res || !res.ok) fallbackDirectPatch(); })
+              .catch(() => fallbackDirectPatch());
+          } else {
+            fallbackDirectPatch();
+          }
         }
         goToCustomerStep(4);
       });
@@ -4829,7 +4860,16 @@
       tosBtnLabel: "📜 T.O.S & Garansi",
       waAdminNumber: "",
       waCheckoutBtnLabel: "📲 Konfirmasi Pembayaran ke WA Mimin Archie",
-      waCheckoutTemplate: "Halo Mimin Archie! 🌸\nAku sudah checkout pesanan di Archie'pelago:\n• Kode Pesanan: {order_code}\n• Inisial: {customer_name}\n• Layanan: {product_name} ({plan_label})\n• Total Bayar: {total_price}\nIni bukti pembayaran / QRIS-nya yaa Mimin! 🐰✨"
+      waCheckoutTemplate: "Halo Mimin Archie! 🌸\nAku sudah checkout pesanan di Archie'pelago:\n• Kode Pesanan: {order_code}\n• Inisial: {customer_name}\n• Layanan: {product_name} ({plan_label})\n• Total Bayar: {total_price}\nIni bukti pembayaran / QRIS-nya yaa Mimin! 🐰✨",
+      waHelpBtnText: "Need help? (,; ⩌ ;,)",
+      waHelpTemplate: "Halo Mimin Archie! 🌸\nAku lagi butuh bantuan saat pesan di Web Archie'pelago nih, boleh tanya sebentar yaa? 🐰✨",
+      custDataModalTitle: "Lengkapi Data Akun Kamu Dulu Yaa~ 🌸",
+      custDataModalSub: "Paket yang kamu pilih butuh data berikut biar Mimin Archie bisa langsung proses pesananmu:",
+      custDataModalNote: "🔒 Data kamu 100% aman & hanya dipakai Mimin Archie untuk proses aktivasi pesanan ini.",
+      custDataGmailHint: "Masukkan alamat Gmail aktif yang ingin di-invite / didaftarkan (tanpa password).",
+      custDataGmailPassHint: "Masukkan Gmail & Password akun yang ingin diproses (disarankan pakai password sementara).",
+      custDataPhoneHint: "Masukkan Nomor HP / WhatsApp aktif yang akan didaftarkan untuk layanan ini.",
+      custDataDeviceHint: "Pilih atau tulis jenis perangkat yang akan dipakai (Android / iOS / Laptop / Smart TV)."
     },
     garansiUi: {
       portalTitle: "WELCOME TO ARCHIE'PELAGO",
@@ -5599,7 +5639,295 @@
       renderVendingShelf();
       renderVendingDrawer();
       renderDualTosModal();
+      var helpBubbleTxt = document.getElementById('custMiniWaHelpText');
+      if (helpBubbleTxt) helpBubbleTxt.textContent = (ui.waHelpBtnText && String(ui.waHelpBtnText).trim()) ? ui.waHelpBtnText : 'Need help? (,; ⩌ ;,)';
     }
+
+    // 7. Subtle Mini Floating WA Help Button (Stays across ALL Web Customer pages; pop-up 2s on / 5s off)
+    (function mountSubtleMiniWaHelp() {
+      var shellEl = document.querySelector('.customer-shell');
+      if (!shellEl || document.getElementById('custMiniWaHelpWrap')) return;
+
+      var helpStyle = document.createElement('style');
+      helpStyle.id = 'custMiniWaHelpCss';
+      helpStyle.textContent =
+        '#custMiniWaHelpWrap {' +
+        '  position: absolute; right: 12px; bottom: 12px; z-index: 44;' +
+        '  display: inline-flex; align-items: center; gap: 6px; pointer-events: none;' +
+        '}' +
+        '#custMiniWaHelpBubble {' +
+        '  cursor: pointer;' +
+        '  background: rgba(255, 253, 250, 0.90); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);' +
+        '  border: 1px solid rgba(244, 182, 207, 0.85); border-radius: 9999px;' +
+        '  padding: 4px 10px; font-size: 10px; font-weight: 700; color: #7E4863; letter-spacing: 0.01em;' +
+        '  box-shadow: 0 4px 12px rgba(158, 56, 100, 0.10); white-space: nowrap;' +
+        '  opacity: 0; transform: translateX(6px) scale(0.95); pointer-events: none;' +
+        '  transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);' +
+        '}' +
+        '#custMiniWaHelpBubble.is-visible {' +
+        '  opacity: 1; transform: translateX(0) scale(1); pointer-events: auto;' +
+        '}' +
+        '#custMiniWaHelpBtn {' +
+        '  pointer-events: auto; cursor: pointer;' +
+        '  width: 32px; height: 32px; border-radius: 9999px;' +
+        '  background: rgba(255, 252, 253, 0.84); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);' +
+        '  border: 1.5px solid rgba(244, 182, 207, 0.88); color: #A25878;' +
+        '  display: inline-flex; align-items: center; justify-content: center;' +
+        '  box-shadow: 0 4px 12px rgba(158, 56, 100, 0.11);' +
+        '  opacity: 0.82; transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease, color 0.2s ease;' +
+        '}' +
+        '#custMiniWaHelpBtn:hover, #custMiniWaHelpBtn:active {' +
+        '  opacity: 1; transform: scale(1.06); background: #FFF0F6; color: #D83162;' +
+        '}';
+      document.head.appendChild(helpStyle);
+
+      var wrap = document.createElement('div');
+      wrap.id = 'custMiniWaHelpWrap';
+      wrap.innerHTML =
+        '<button id="custMiniWaHelpBubble" type="button" aria-label="Bantuan WhatsApp">' +
+          '<span id="custMiniWaHelpText">Need help? (,; ⩌ ;,)</span>' +
+        '</button>' +
+        '<button id="custMiniWaHelpBtn" type="button" title="Need help? (,; ⩌ ;,)" aria-label="Hubungi WhatsApp">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+            '<path d="M20.52 3.48A11.86 11.86 0 0 0 12.06 0C5.48 0 .12 5.36.12 11.94c0 2.1.55 4.16 1.6 5.97L0 24l6.26-1.64a11.9 11.9 0 0 0 5.8 1.48h.01c6.58 0 11.94-5.36 11.94-11.94 0-3.19-1.24-6.19-3.49-8.42Zm-8.46 18.35h-.01a9.9 9.9 0 0 1-5.05-1.38l-.36-.21-3.71.97.99-3.62-.24-.37a9.89 9.89 0 0 1-1.52-5.28c0-5.46 4.44-9.9 9.91-9.9 2.65 0 5.13 1.03 7 2.9a9.84 9.84 0 0 1 2.9 7.01c0 5.46-4.45 9.88-9.91 9.88Zm5.43-7.41c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.64.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.09 4.49.71.31 1.27.49 1.7.63.72.23 1.37.2 1.88.12.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.57-.35Z"/>' +
+          '</svg>' +
+        '</button>';
+      shellEl.appendChild(wrap);
+
+      function openMiniWaHelp() {
+        var ui = (liveCms && liveCms.customerUi) ? liveCms.customerUi : (window.ARCHIE_DEFAULT_CMS ? window.ARCHIE_DEFAULT_CMS.customerUi : {});
+        var rawNum = String(ui.waAdminNumber || ui.waNumber || '').replace(/[^0-9]/g, '');
+        var tpl = (ui.waHelpTemplate && String(ui.waHelpTemplate).trim())
+          ? ui.waHelpTemplate
+          : "Halo Mimin Archie! 🌸\nAku lagi butuh bantuan saat pesan di Web Archie'pelago nih, boleh tanya sebentar yaa? 🐰✨";
+        var ord = (typeof currentOrder !== 'undefined' && currentOrder) ? currentOrder : {};
+        var custName = ord.customerName || ((document.getElementById('custNameInput') || {}).value || '').trim() || 'Kak Customer';
+        var msg = tpl
+          .replace(/\{order_code\}/gi, ord.orderCode || '-')
+          .replace(/\{customer_name\}/gi, custName)
+          .replace(/\{product_name\}/gi, ord.productName || 'Aplikasi Premium');
+        var url = (rawNum ? ('https://wa.me/' + rawNum) : 'https://wa.me/') + '?text=' + encodeURIComponent(msg);
+        window.open(url, '_blank', 'noopener');
+      }
+
+      var bubbleEl = document.getElementById('custMiniWaHelpBubble');
+      var btnEl = document.getElementById('custMiniWaHelpBtn');
+      if (bubbleEl) bubbleEl.addEventListener('click', openMiniWaHelp);
+      if (btnEl) btnEl.addEventListener('click', openMiniWaHelp);
+
+      // Exact cycle: show pop-up text for 2 seconds, hide for 5 seconds, repeat
+      function runHelpBubbleCycle() {
+        if (!bubbleEl) return;
+        bubbleEl.classList.add('is-visible');
+        setTimeout(function() {
+          bubbleEl.classList.remove('is-visible');
+          setTimeout(runHelpBubbleCycle, 5000);
+        }, 2000);
+      }
+      setTimeout(runHelpBubbleCycle, 400);
+    })();
+
+    // 8. Customer Account Data Input Pop-up (Before Donation Pop-up: Gmail / Gmail+Pass / Phone)
+    (function mountCustomerAccountDataModal() {
+      if (document.getElementById('custAccountDataModal')) return;
+      var modalEl = document.createElement('div');
+      modalEl.id = 'custAccountDataModal';
+      modalEl.className = 'modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4';
+      modalEl.innerHTML =
+        '<div class="modal-card w-full max-w-[368px] bg-white border-[2.5px] border-[#F4A9C7] rounded-[28px] p-4 shadow-2xl space-y-3 text-left">' +
+          '<div class="flex items-start justify-between gap-2">' +
+            '<div>' +
+              '<span id="custDataMethodBadge" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FFE4EE] text-[#D83162] text-[9.5px] font-black uppercase tracking-wider">📧 Data Akun</span>' +
+              '<h3 id="custDataModalTitleEl" class="text-sm font-black text-[#4A2036] mt-1 leading-snug">Lengkapi Data Akun Kamu Dulu Yaa~ 🌸</h3>' +
+            '</div>' +
+            '<button id="closeCustDataModalBtn" type="button" class="w-7 h-7 rounded-full bg-[#FFF0F6] hover:bg-[#FFE0EC] text-[#8E2452] font-black text-xs flex items-center justify-center shrink-0 cursor-pointer">✕</button>' +
+          '</div>' +
+          '<p id="custDataModalSubEl" class="text-[11px] font-bold text-[#6D3B53] leading-relaxed"></p>' +
+          '<div id="custDataHintBox" class="px-3 py-2 rounded-xl bg-[#FFF6FA] border border-[#F5C6D8] text-[10.5px] font-bold text-[#8E2452] leading-snug"></div>' +
+          '<div id="custDataFieldsWrap" class="space-y-2"></div>' +
+          '<p id="custDataModalNoteEl" class="text-[10px] font-semibold text-[#7A4961] leading-snug"></p>' +
+          '<div class="flex items-center gap-2 pt-1">' +
+            '<button id="backCustDataModalBtn" type="button" class="px-3 py-2 rounded-full bg-[#FFF0F6] hover:bg-[#FFE0EC] border border-[#F5B8CE] text-[10.5px] font-extrabold text-[#8E2452] cursor-pointer">← Kembali</button>' +
+            '<button id="confirmCustDataModalBtn" type="button" class="flex-1 py-2.5 rounded-full sweet-btn text-xs font-black tracking-wide cursor-pointer">Lanjut ke Donasi ✨ →</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(modalEl);
+
+      function resolveRequiredCustomerInputType() {
+        var ord = (typeof currentOrder !== 'undefined' && currentOrder) ? currentOrder : {};
+        var cat = (liveCms && Array.isArray(liveCms.catalog)) ? liveCms.catalog : ((window.ARCHIE_DEFAULT_CMS && window.ARCHIE_DEFAULT_CMS.catalog) || []);
+        var appObj = cat.find(function(a) {
+          return String(a.id || '').toLowerCase() === String(ord.productId || '').toLowerCase() ||
+                 String(a.name || '').toLowerCase() === String(ord.productName || '').toLowerCase();
+        });
+        if (appObj && Array.isArray(appObj.plans)) {
+          var planObj = appObj.plans.find(function(p) {
+            return String(p.label || p.name || '').trim().toLowerCase() === String(ord.durationLabel || '').trim().toLowerCase();
+          });
+          if (planObj && planObj.customerInputType && planObj.customerInputType !== 'auto') {
+            return planObj.customerInputType;
+          }
+        }
+        // Smart Auto-Detect fallback when set to 'auto' or unset
+        var hay = (String(ord.productName || '') + ' ' + String(ord.durationLabel || '')).toLowerCase();
+        var needsDev = /(device|android|ios|iphone|ipad|laptop|pc|smart\s*tv|goodnotes|procreate|alight\s*motion|wink|meitu|remini|netflix|capcut)/.test(hay);
+        if (/(\bno\.?\s*hp\b|\bnomor\b|\bphone\b|\bwhatsapp\b|\bgetcontact\b|\btelp\b)/.test(hay)) return needsDev ? 'phone_device' : 'phone';
+        if (/(gmail\s*\+\s*pass|email\s*\+\s*pass|mail\s*\+\s*pass|login\s*akun|akun\s*cust|akun\s*pembeli|indplan|perpanjang|renew)/.test(hay)) return needsDev ? 'gmail_pass_device' : 'gmail_pass';
+        if (/(invite|famplan|family\s*plan|canva|youtube|spotify|google\s*one|gdrive|gmail|email)/.test(hay)) return needsDev ? 'gmail_device' : 'gmail';
+        if (needsDev) return 'device';
+        return 'none';
+      }
+
+      var activeInputType = 'none';
+      function openCustDataPopup(reqType, onDone) {
+        activeInputType = reqType;
+        var ui = (liveCms && liveCms.customerUi) ? liveCms.customerUi : ((window.ARCHIE_DEFAULT_CMS && window.ARCHIE_DEFAULT_CMS.customerUi) || {});
+        var defUi = (window.ARCHIE_DEFAULT_CMS && window.ARCHIE_DEFAULT_CMS.customerUi) || {};
+        document.getElementById('custDataModalTitleEl').textContent = ui.custDataModalTitle || defUi.custDataModalTitle || 'Lengkapi Data Akun Kamu Dulu Yaa~ 🌸';
+        document.getElementById('custDataModalSubEl').textContent = ui.custDataModalSub || defUi.custDataModalSub || 'Paket yang kamu pilih butuh data berikut biar Mimin Archie bisa langsung proses pesananmu:';
+        document.getElementById('custDataModalNoteEl').textContent = ui.custDataModalNote || defUi.custDataModalNote || '🔒 Data kamu 100% aman & hanya dipakai Mimin Archie untuk proses aktivasi pesanan ini.';
+
+        var badgeEl = document.getElementById('custDataMethodBadge');
+        var hintEl = document.getElementById('custDataHintBox');
+        var fieldsEl = document.getElementById('custDataFieldsWrap');
+
+        var hasGmail = reqType.indexOf('gmail') >= 0;
+        var hasPass = reqType.indexOf('gmail_pass') >= 0;
+        var hasPhone = reqType.indexOf('phone') >= 0;
+        var hasDevice = reqType.indexOf('device') >= 0;
+
+        var badgeParts = [];
+        var hintParts = [];
+        var htmlParts = [];
+
+        if (hasDevice) {
+          badgeParts.push('💻 Device');
+          hintParts.push(ui.custDataDeviceHint || defUi.custDataDeviceHint || 'Pilih atau tulis jenis perangkat yang akan dipakai (Android / iOS / Laptop / Smart TV).');
+          htmlParts.push(
+            '<div>' +
+              '<label class="block text-[10.5px] font-extrabold text-[#6D3B53] mb-1">Device yang Dipakai</label>' +
+              '<div class="flex flex-wrap gap-1 mb-1.5">' +
+                ['Android', 'iOS / iPhone', 'iPad', 'Laptop / PC', 'Smart TV'].map(function(dv) {
+                  return '<button type="button" data-pick-device="' + dv + '" class="px-2 py-0.5 rounded-lg bg-[#FFF0F6] hover:bg-[#D83162] text-[#8E2452] hover:text-white border border-[#F5B8CE] text-[10px] font-bold transition cursor-pointer">' + dv + '</button>';
+                }).join('') +
+              '</div>' +
+              '<input id="custDataDeviceInp" type="text" placeholder="contoh: iPhone 13 / Android / Laptop..." class="w-full px-3 py-2 rounded-xl bg-[#FFF8FA] border-2 border-[#F5BDD2] text-xs font-bold text-[#4A2036] focus:outline-none focus:border-[#D83162]" />' +
+            '</div>'
+          );
+        }
+        if (hasGmail) {
+          badgeParts.push(hasPass ? '🔐 Gmail + Password' : '📧 Gmail');
+          hintParts.push(hasPass
+            ? (ui.custDataGmailPassHint || defUi.custDataGmailPassHint || 'Masukkan Gmail & Password akun yang ingin diproses (disarankan pakai password sementara).')
+            : (ui.custDataGmailHint || defUi.custDataGmailHint || 'Masukkan alamat Gmail aktif yang ingin di-invite / didaftarkan (tanpa password).'));
+          htmlParts.push(
+            '<div>' +
+              '<label class="block text-[10.5px] font-extrabold text-[#6D3B53] mb-1">Alamat Gmail Aktif</label>' +
+              '<input id="custDataGmailInp" type="email" placeholder="contoh: nama@gmail.com" class="w-full px-3 py-2 rounded-xl bg-[#FFF8FA] border-2 border-[#F5BDD2] text-xs font-bold text-[#4A2036] focus:outline-none focus:border-[#D83162]" />' +
+            '</div>'
+          );
+          if (hasPass) {
+            htmlParts.push(
+              '<div>' +
+                '<label class="block text-[10.5px] font-extrabold text-[#6D3B53] mb-1">Password Akun</label>' +
+                '<input id="custDataPassInp" type="text" placeholder="Masukkan password akun..." class="w-full px-3 py-2 rounded-xl bg-[#FFF8FA] border-2 border-[#F5BDD2] text-xs font-bold text-[#4A2036] focus:outline-none focus:border-[#D83162]" />' +
+              '</div>'
+            );
+          }
+        }
+        if (hasPhone) {
+          badgeParts.push('📱 Nomor HP');
+          hintParts.push(ui.custDataPhoneHint || defUi.custDataPhoneHint || 'Masukkan Nomor HP / WhatsApp aktif yang akan didaftarkan untuk layanan ini.');
+          htmlParts.push(
+            '<div>' +
+              '<label class="block text-[10.5px] font-extrabold text-[#6D3B53] mb-1">Nomor HP / WhatsApp</label>' +
+              '<input id="custDataPhoneInp" type="tel" placeholder="contoh: 081234567890" class="w-full px-3 py-2 rounded-xl bg-[#FFF8FA] border-2 border-[#F5BDD2] text-xs font-bold text-[#4A2036] focus:outline-none focus:border-[#D83162]" />' +
+            '</div>'
+          );
+        }
+
+        badgeEl.textContent = badgeParts.join(' + ') || '📧 Data Akun';
+        hintEl.textContent = hintParts.join(' ');
+        fieldsEl.innerHTML = htmlParts.join('');
+
+        fieldsEl.querySelectorAll('[data-pick-device]').forEach(function(chip) {
+          chip.addEventListener('click', function() {
+            var di = document.getElementById('custDataDeviceInp');
+            if (di) di.value = chip.getAttribute('data-pick-device') || '';
+          });
+        });
+
+        modalEl.classList.add('open');
+        var firstInp = fieldsEl.querySelector('input');
+        if (firstInp) setTimeout(function() { firstInp.focus(); }, 120);
+
+        document.getElementById('confirmCustDataModalBtn').onclick = function() {
+          var parts = [];
+          if (hasDevice) {
+            var dv = ((document.getElementById('custDataDeviceInp') || {}).value || '').trim();
+            if (!dv) {
+              showCustomerToast('Pilih atau isi jenis Device yang kamu pakai dulu yaa Kak~ 💻', 'camShock');
+              return;
+            }
+            parts.push('Device=' + dv.replace(/[;|[\]]/g, ' '));
+          }
+          if (hasGmail) {
+            var gm = ((document.getElementById('custDataGmailInp') || {}).value || '').trim();
+            if (!gm || !gm.includes('@')) {
+              showCustomerToast('Masukkan alamat Gmail yang valid dulu yaa Kak~ 📧', 'camShock');
+              return;
+            }
+            parts.push('Gmail=' + gm.replace(/[;|[\]]/g, ' '));
+            if (hasPass) {
+              var pw = ((document.getElementById('custDataPassInp') || {}).value || '').trim();
+              if (!pw) {
+                showCustomerToast('Masukkan Password akun kamu dulu yaa Kak~ 🔐', 'camShock');
+                return;
+              }
+              parts.push('Pass=' + pw.replace(/[;|[\]]/g, ' '));
+            }
+          }
+          if (hasPhone) {
+            var ph = ((document.getElementById('custDataPhoneInp') || {}).value || '').trim();
+            if (ph.replace(/[^0-9]/g, '').length < 8) {
+              showCustomerToast('Masukkan Nomor HP aktif yang valid dulu yaa Kak~ 📱', 'camShock');
+              return;
+            }
+            parts.push('Phone=' + ph.replace(/[;|[\]]/g, ' '));
+          }
+          currentOrder.customerInputType = activeInputType;
+          currentOrder.customerInputData = parts.join('; ');
+          modalEl.classList.remove('open');
+          if (typeof onDone === 'function') onDone();
+        };
+      }
+
+      var closeFn = function() { modalEl.classList.remove('open'); };
+      document.getElementById('closeCustDataModalBtn').addEventListener('click', closeFn);
+      document.getElementById('backCustDataModalBtn').addEventListener('click', closeFn);
+
+      // Wrap openDonationPopupBeforeSpin so Customer Data Input Pop-up ALWAYS runs right before Donation Pop-up!
+      if (typeof openDonationPopupBeforeSpin === 'function' && !window.__CUST_DATA_MODAL_WRAPPED__) {
+        window.__CUST_DATA_MODAL_WRAPPED__ = true;
+        var origOpenDonation = openDonationPopupBeforeSpin;
+        openDonationPopupBeforeSpin = function() {
+          if (currentOrder.productId === 'secret_menu' && secretMenuState.status !== 'received') {
+            origOpenDonation();
+            return;
+          }
+          var reqType = resolveRequiredCustomerInputType();
+          if (reqType === 'none') {
+            currentOrder.customerInputType = 'none';
+            currentOrder.customerInputData = '';
+            origOpenDonation();
+            return;
+          }
+          openCustDataPopup(reqType, function() {
+            origOpenDonation();
+          });
+        };
+      }
+    })();
 
     applyCmsConfigToCustomer(liveCms);
     if (typeof SUPABASE_URL !== 'undefined' && typeof SUPABASE_ANON_KEY !== 'undefined') {
@@ -5708,6 +6036,9 @@
         obs3.observe(p3, { attributes: true, attributeFilter: ['class'] });
       }
     })();
+</script>
+<script>
+  (function() { window.name = 'archie_web_customer'; })();
 </script>
 </body>
 </html>
