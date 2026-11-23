@@ -4551,7 +4551,7 @@
               try {
                 const client = getSupabaseClient();
                 if (client) {
-                  client.from('orders').update({ discount_pct: wantDisc, saved_amount: wantSaved, final_price: wantFinal }).eq('id', res.id).then(function() {}).catch(function() {});
+                  client.from('orders').update({ discount_pct: wantDisc, saved_amount: wantSaved, final_price: wantFinal }).eq('id', res.id).then(function() {}, function() {});
                 }
               } catch (_) {}
               res.discount_pct = wantDisc;
