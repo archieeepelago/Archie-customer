@@ -2916,7 +2916,7 @@
 
       if (qrisUrl && typeof qrisUrl === 'string' && qrisUrl.trim() !== '') {
         currentOrder.qrisImageUrl = qrisUrl.trim();
-        imgEl.onload = () => {
+        const showRealQris = () => {
           imgEl.classList.remove('hidden');
           svgEl.classList.add('hidden');
           if (zoomImg && zoomSvg) {
@@ -2925,6 +2925,7 @@
             zoomSvg.classList.add('hidden');
           }
         };
+        imgEl.onload = showRealQris;
         imgEl.onerror = () => {
           imgEl.classList.add('hidden');
           svgEl.classList.remove('hidden');
@@ -2934,6 +2935,7 @@
           }
         };
         imgEl.src = currentOrder.qrisImageUrl;
+        showRealQris();
       } else {
         imgEl.classList.add('hidden');
         svgEl.classList.remove('hidden');
@@ -4558,8 +4560,9 @@
               res.saved_amount = wantSaved;
               res.final_price = wantFinal;
             }
+            currentOrder.checkoutToken = res.checkout_token || tok;
             try {
-              sessionStorage.setItem('archie_checkout_token', res.checkout_token || tok);
+              sessionStorage.setItem('archie_checkout_token', currentOrder.checkoutToken);
               sessionStorage.setItem('archie_active_order_id', String(res.id));
             } catch (e) {}
             return res;
@@ -4597,9 +4600,9 @@
     startRealtimeAndPollingForOrder = function(orderId) {
       if (!orderId) return;
       stopOrderWatchers();
-      const tok = getOrCreateCheckoutToken();
-      activeOrderPollTimer = setInterval(async () => {
+      const pollOnce = async () => {
         if (!currentOrder.dbOrderId) return;
+        const tok = currentOrder.checkoutToken || getOrCreateCheckoutToken();
         let row = null;
         try {
           row = await callCustRpc('get_checkout_status', {
@@ -4620,7 +4623,9 @@
           } catch (e2) {}
         }
         if (row) processIncomingOrderRow(row);
-      }, 2500);
+      };
+      pollOnce();
+      activeOrderPollTimer = setInterval(pollOnce, 2000);
     };
 
   </script>
