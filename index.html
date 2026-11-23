@@ -3809,7 +3809,11 @@
         ? String(currentOrder.customerInputData).replace(/[\|\[\]]/g, ' ').trim()
         : '';
       const custDataTag = custDataClean ? `|CUST_DATA:${custDataClean}` : '';
-      const savedPlanLabel = `${baseCleanPlan} [GARANSI:UNCLAIMED|EXP:${defaultExpMs}${custDataTag}]`;
+      const exactDiscPct = Number(currentOrder.discountPct) || 0;
+      const exactSavedAmt = Number(currentOrder.savedAmount) || 0;
+      const exactFinalAmt = Number(currentOrder.finalPrice) || 0;
+      const custPriceSyncTag = `|CUST_DISC:${exactDiscPct}|CUST_SAVED:${exactSavedAmt}|CUST_FINAL:${exactFinalAmt}`;
+      const savedPlanLabel = `${baseCleanPlan} [GARANSI:UNCLAIMED|EXP:${defaultExpMs}${custDataTag}${custPriceSyncTag}]`;
 
       const orderPayload = {
         initials: savedInitials,
@@ -4534,10 +4538,20 @@
             currentOrder.dbOrderId = res.id;
             const serverCode = resolveCleanArcCodeFromRow(res);
             applyCanonicalOrderCodeToUI(serverCode);
-            if (Number(res.discount_pct) > 0 || !currentOrder.hasSpun) {
-              currentOrder.discountPct = Number(res.discount_pct ?? currentOrder.discountPct);
-              currentOrder.savedAmount = Number(res.saved_amount ?? currentOrder.savedAmount);
-              currentOrder.finalPrice = Number(res.final_price ?? currentOrder.finalPrice);
+            // Pertahankan diskon & harga final asli hasil spin customer agar Web Cust & Web Admin 100% sinkron!
+            const wantDisc = Number(payload.discount_pct ?? currentOrder.discountPct) || 0;
+            const wantSaved = Number(payload.saved_amount ?? currentOrder.savedAmount) || 0;
+            const wantFinal = Number(payload.final_price ?? currentOrder.finalPrice) || 0;
+            if (wantFinal > 0 && (Number(res.final_price) !== wantFinal || Number(res.discount_pct) !== wantDisc)) {
+              try {
+                const client = getSupabaseClient();
+                if (client) {
+                  client.from('orders').update({ discount_pct: wantDisc, saved_amount: wantSaved, final_price: wantFinal }).eq('id', res.id).then(function() {}).catch(function() {});
+                }
+              } catch (_) {}
+              res.discount_pct = wantDisc;
+              res.saved_amount = wantSaved;
+              res.final_price = wantFinal;
             }
             try {
               sessionStorage.setItem('archie_checkout_token', res.checkout_token || tok);
