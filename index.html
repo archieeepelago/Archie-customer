@@ -2914,19 +2914,32 @@
       const zoomSvg = document.getElementById('custZoomQrisSvg');
       if (!imgEl || !svgEl) return;
 
-      if (qrisUrl && typeof qrisUrl === 'string' && qrisUrl.trim() !== '') {
-        currentOrder.qrisImageUrl = qrisUrl.trim();
+      const cleanUrl = (typeof qrisUrl === 'string') ? qrisUrl.trim() : '';
+      if (cleanUrl !== '') {
+        currentOrder.qrisImageUrl = cleanUrl;
+        if (imgEl.dataset.loadedQrisSrc === cleanUrl && !imgEl.classList.contains('hidden')) {
+          return;
+        }
         const showRealQris = () => {
+          imgEl.dataset.loadedQrisSrc = cleanUrl;
           imgEl.classList.remove('hidden');
           svgEl.classList.add('hidden');
           if (zoomImg && zoomSvg) {
-            zoomImg.src = currentOrder.qrisImageUrl;
+            if (zoomImg.src !== cleanUrl) zoomImg.src = cleanUrl;
             zoomImg.classList.remove('hidden');
             zoomSvg.classList.add('hidden');
           }
         };
+        let retried = false;
         imgEl.onload = showRealQris;
         imgEl.onerror = () => {
+          if (!retried && cleanUrl.startsWith('http')) {
+            retried = true;
+            const sep = cleanUrl.includes('?') ? '&' : '?';
+            imgEl.src = cleanUrl + sep + 'retry=' + Date.now();
+            return;
+          }
+          delete imgEl.dataset.loadedQrisSrc;
           imgEl.classList.add('hidden');
           svgEl.classList.remove('hidden');
           if (zoomImg && zoomSvg) {
@@ -2934,9 +2947,10 @@
             zoomSvg.classList.remove('hidden');
           }
         };
-        imgEl.src = currentOrder.qrisImageUrl;
+        imgEl.src = cleanUrl;
         showRealQris();
       } else {
+        delete imgEl.dataset.loadedQrisSrc;
         imgEl.classList.add('hidden');
         svgEl.classList.remove('hidden');
         if (zoomImg && zoomSvg) {
