@@ -4400,7 +4400,16 @@
       document.getElementById('copyOrderSummaryBtn').addEventListener('click', () => {
         const verifiedCode = getVerifiedCodeForCopy();
         if (!verifiedCode) { showCustomerToast('Klik tombol Minta QRIS dulu yaa Kak supaya nomor antrean resmi keluar~ 🐰', 'waitPout'); return; }
-        const summary = `Struk Archie'pelago (${verifiedCode}): ${String(currentOrder.customerName || '').replace(/\s*👑\s*Donatur/gi, '').trim()} | ${currentOrder.productName} (${currentOrder.durationLabel}) | Diskon ${currentOrder.discountPct}% | Total: ${formatRp(currentOrder.finalPrice)}`;
+        const cmsSum = (window.ArchieLiveCms && (window.ArchieLiveCms.current || (window.ArchieLiveCms.getCached && window.ArchieLiveCms.getCached()))) || {};
+        const sumTpl = (cmsSum && cmsSum.customerUi && cmsSum.customerUi.orderSummaryTemplate) || "Struk Archie'pelago ({order_code}): {customer_name} | {product_name} ({plan_label}) | Diskon {discount_pct} | Total: {total_price}";
+        const cleanCustSum = String(currentOrder.customerName || '').replace(/\s*👑\s*Donatur/gi, '').replace(/donatur/gi, '').replace(/👑/g, '').trim() || 'Customer';
+        const summary = sumTpl
+          .replace(/\{order_code\}/gi, verifiedCode)
+          .replace(/\{customer_name\}/gi, cleanCustSum)
+          .replace(/\{product_name\}/gi, currentOrder.productName || 'Aplikasi Premium')
+          .replace(/\{plan_label\}|\{duration_label\}/gi, currentOrder.durationLabel || '1 Bulan')
+          .replace(/\{discount_pct\}/gi, `${currentOrder.discountPct || 0}%`)
+          .replace(/\{total_price\}/gi, formatRp(currentOrder.finalPrice || 0));
         copyTextToClipboard(summary, `Struk & kode ${currentOrder.orderCode} berhasil disalin~ 📋`);
       });
       function getVerifiedCodeForCopy() {
