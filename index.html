@@ -5306,14 +5306,29 @@
         var waNum = String(ui.waAdminNumber || ui.waNumber || '').replace(/[^0-9]/g, '');
         var tpl = ui.waCheckoutTemplate || ui.checkoutWaTemplate || "Halo Mimin Archie! 🌸\nAku sudah checkout pesanan {order_code} ({product_name} - {plan_label}) total {total_price}. Ini bukti pembayarannya yaa! 🐰✨";
         var ord = (typeof currentOrder !== 'undefined' && currentOrder) ? currentOrder : {};
+        var stripDon = function(s) {
+          return String(s || '')
+            .replace(/\(\s*(?:👑\s*)?(?:donatur|donasi)[^)]*\)/gi, '')
+            .replace(/(?:[•|,+-]\s*)?(?:👑\s*)?(?:donatur|donasi)(?:\s*\([^)]*\))?(?:\s*\+?\s*rp[\s\d.,]+)?/gi, '')
+            .replace(/\(\s*\+?\s*rp[\s\d.,]+\s*\)/gi, '')
+            .replace(/👑/g, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+        };
+        var cleanCustNm = stripDon(ord.customerName || '') || 'Customer';
+        var cleanProdNm = stripDon(ord.productName || '') || 'Aplikasi Premium';
+        var cleanPlanNm = stripDon(ord.durationLabel || '') || '1 Bulan';
+        var discText = (ord.discountPct || 0) > 0 ? ('Diskon Gacha ' + ord.discountPct + '%' + (ord.savedAmount > 0 && typeof formatRp === 'function' ? (' (-' + formatRp(ord.savedAmount) + ')') : '')) : 'Tanpa Diskon';
         var msg = tpl
-          .replace(/\{order_code\}/g, ord.orderCode || 'ARC-0001')
-          .replace(/\{customer_name\}/g, ord.customerName || 'Customer')
-          .replace(/\{product_name\}/g, ord.productName || 'Aplikasi Premium')
-          .replace(/\{plan_label\}/g, ord.durationLabel || '1 Bulan')
-          .replace(/\{duration_label\}/g, ord.durationLabel || '1 Bulan')
-          .replace(/\{total_price\}/g, typeof formatRp === 'function' ? formatRp(ord.finalPrice || 0) : ('Rp ' + (ord.finalPrice || 0)))
-          .replace(/\{discount_info\}/g, (ord.discountPct || 0) > 0 ? ('Diskon Gacha ' + ord.discountPct + '%') : 'Tanpa Diskon');
+          .replace(/\{order_code\}|\{kode_pesanan\}/gi, ord.orderCode || 'ARC-0001')
+          .replace(/\{customer_name\}|\{nama_customer\}|\{nama\}/gi, cleanCustNm)
+          .replace(/\{product_name\}|\{produk\}/gi, cleanProdNm)
+          .replace(/\{plan_label\}|\{paket\}/gi, cleanPlanNm)
+          .replace(/\{duration_label\}|\{durasi\}/gi, cleanPlanNm)
+          .replace(/\{subscription_type\}|\{tipe_langganan\}/gi, cleanPlanNm)
+          .replace(/\{total_price\}|\{total\}|\{harga\}/gi, typeof formatRp === 'function' ? formatRp(ord.finalPrice || 0) : ('Rp ' + (ord.finalPrice || 0)))
+          .replace(/\{discount_info\}|\{diskon\}/gi, discText)
+          .replace(/\{customer_input\}|\{data_customer\}/gi, ord.customerInputData || '-');
         var url = (typeof window.buildSafeWhatsappUrl === 'function')
           ? window.buildSafeWhatsappUrl(waNum, msg)
           : ('https://api.whatsapp.com/send?' + (waNum ? ('phone=' + encodeURIComponent(waNum) + '&') : '') + 'text=' + encodeURIComponent(msg));
@@ -5653,12 +5668,27 @@
       var ui = (liveCms && liveCms.customerUi) ? liveCms.customerUi : window.ARCHIE_DEFAULT_CMS.customerUi;
       var rawNum = String(ui.waAdminNumber || '').replace(/[^0-9]/g, '');
       var tpl = ui.waCheckoutTemplate || window.ARCHIE_DEFAULT_CMS.customerUi.waCheckoutTemplate;
+      var stripDon2 = function(s) {
+        return String(s || '')
+          .replace(/\(\s*(?:👑\s*)?(?:donatur|donasi)[^)]*\)/gi, '')
+          .replace(/(?:[•|,+-]\s*)?(?:👑\s*)?(?:donatur|donasi)(?:\s*\([^)]*\))?(?:\s*\+?\s*rp[\s\d.,]+)?/gi, '')
+          .replace(/\(\s*\+?\s*rp[\s\d.,]+\s*\)/gi, '')
+          .replace(/👑/g, '')
+          .replace(/\s{2,}/g, ' ')
+          .trim();
+      };
+      var ord2 = (typeof currentOrder !== 'undefined' && currentOrder) ? currentOrder : {};
+      var discText2 = (ord2.discountPct || 0) > 0 ? ('Diskon Gacha ' + ord2.discountPct + '%' + (ord2.savedAmount > 0 ? (' (-' + formatRp(ord2.savedAmount) + ')') : '')) : 'Tanpa Diskon';
       var msg = tpl
-        .replace(/\{order_code\}/gi, (currentOrder && currentOrder.orderCode) || 'ARC-0001')
-        .replace(/\{customer_name\}/gi, (currentOrder && currentOrder.customerName) || 'Kak Customer')
-        .replace(/\{product_name\}/gi, (currentOrder && currentOrder.productName) || '')
-        .replace(/\{plan_label\}/gi, (currentOrder && currentOrder.durationLabel) || '')
-        .replace(/\{total_price\}/gi, formatRp((currentOrder && currentOrder.finalPrice) || 0));
+        .replace(/\{order_code\}|\{kode_pesanan\}/gi, ord2.orderCode || 'ARC-0001')
+        .replace(/\{customer_name\}|\{nama_customer\}|\{nama\}/gi, stripDon2(ord2.customerName || '') || 'Kak Customer')
+        .replace(/\{product_name\}|\{produk\}/gi, stripDon2(ord2.productName || '') || 'Aplikasi Premium')
+        .replace(/\{plan_label\}|\{paket\}/gi, stripDon2(ord2.durationLabel || '') || '1 Bulan')
+        .replace(/\{duration_label\}|\{durasi\}/gi, stripDon2(ord2.durationLabel || '') || '1 Bulan')
+        .replace(/\{subscription_type\}|\{tipe_langganan\}/gi, stripDon2(ord2.durationLabel || '') || '1 Bulan')
+        .replace(/\{total_price\}|\{total\}|\{harga\}/gi, formatRp(ord2.finalPrice || 0))
+        .replace(/\{discount_info\}|\{diskon\}/gi, discText2)
+        .replace(/\{customer_input\}|\{data_customer\}/gi, ord2.customerInputData || '-');
       var waUrl = (typeof window.buildSafeWhatsappUrl === 'function')
         ? window.buildSafeWhatsappUrl(rawNum, msg)
         : ('https://api.whatsapp.com/send?' + (rawNum ? ('phone=' + encodeURIComponent(rawNum) + '&') : '') + 'text=' + encodeURIComponent(msg));
@@ -5805,11 +5835,24 @@
           ? ui.waHelpTemplate
           : "Halo Mimin Archie! 🌸\nAku lagi butuh bantuan saat pesan di Web Archie'pelago nih, boleh tanya sebentar yaa? 🐰✨";
         var ord = (typeof currentOrder !== 'undefined' && currentOrder) ? currentOrder : {};
-        var custName = ord.customerName || ((document.getElementById('custNameInput') || {}).value || '').trim() || 'Kak Customer';
+        var stripDon3 = function(s) {
+          return String(s || '')
+            .replace(/\(\s*(?:👑\s*)?(?:donatur|donasi)[^)]*\)/gi, '')
+            .replace(/(?:[•|,+-]\s*)?(?:👑\s*)?(?:donatur|donasi)(?:\s*\([^)]*\))?(?:\s*\+?\s*rp[\s\d.,]+)?/gi, '')
+            .replace(/\(\s*\+?\s*rp[\s\d.,]+\s*\)/gi, '')
+            .replace(/👑/g, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+        };
+        var custName = stripDon3(ord.customerName || ((document.getElementById('custNameInput') || {}).value || '').trim()) || 'Kak Customer';
+        var cleanPlanHelp = stripDon3(ord.durationLabel || '') || '1 Bulan';
         var msg = tpl
-          .replace(/\{order_code\}/gi, ord.orderCode || '-')
-          .replace(/\{customer_name\}/gi, custName)
-          .replace(/\{product_name\}/gi, ord.productName || 'Aplikasi Premium');
+          .replace(/\{order_code\}|\{kode_pesanan\}/gi, ord.orderCode || '-')
+          .replace(/\{customer_name\}|\{nama_customer\}|\{nama\}/gi, custName)
+          .replace(/\{product_name\}|\{produk\}/gi, stripDon3(ord.productName || '') || 'Aplikasi Premium')
+          .replace(/\{plan_label\}|\{paket\}/gi, cleanPlanHelp)
+          .replace(/\{duration_label\}|\{durasi\}/gi, cleanPlanHelp)
+          .replace(/\{total_price\}|\{total\}|\{harga\}/gi, typeof formatRp === 'function' ? formatRp(ord.finalPrice || 0) : ('Rp ' + (ord.finalPrice || 0)));
         var url = (typeof window.buildSafeWhatsappUrl === 'function')
           ? window.buildSafeWhatsappUrl(rawNum, msg)
           : ('https://api.whatsapp.com/send?' + (rawNum ? ('phone=' + encodeURIComponent(rawNum) + '&') : '') + 'text=' + encodeURIComponent(msg));
